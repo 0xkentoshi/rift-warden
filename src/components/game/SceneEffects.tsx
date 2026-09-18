@@ -15,12 +15,15 @@ export function SceneEffects({
   lastAction: AuditEvent | null
 }) {
   const ref = useRef<HTMLCanvasElement>(null)
+  const proximity = useRef({ id: nearby, since: 0 })
   useEffect(() => {
     const ctx = ref.current?.getContext('2d')
     if (!ctx) return
     ctx.setTransform(0.5, 0, 0, 0.5, 0, 0)
     ctx.imageSmoothingEnabled = false
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)')
+    if (proximity.current.id !== nearby)
+      proximity.current = { id: nearby, since: performance.now() }
     const states = Object.entries(portalPositions).map(([id, placement]) => {
       const portal = portals.find((p) => p.id === id)
       const risk = portal ? calculateRisk(portal) : null
@@ -34,13 +37,20 @@ export function SceneEffects({
       }
     })
     let frame = 0
+    let lastPaint = -Infinity
     const draw = (now: number) => {
-      const time = motion.matches ? 0 : Math.floor(now / 65) * 0.065
+      // One 30 fps pixel layer; movement remains on its existing independent RAF.
+      if (!motion.matches && !document.hidden && now - lastPaint < 32) {
+        frame = requestAnimationFrame(draw)
+        return
+      }
+      lastPaint = now
+      const time = motion.matches ? 0 : now / 1000
       ctx.clearRect(0, 0, SCENE.width, SCENE.height)
       for (const [index, state] of states.entries()) {
         const { id, placement: p, creatures, closed, color, fx } = state
         const direction = index % 2 ? -1 : 1
-        const wave = 0.7 + 0.3 * Math.sin(time * fx.pulse * 3 + index)
+        const wave = 0.65 + 0.35 * Math.sin(time * fx.pulse * 2 + index)
         const actionAge =
           lastAction?.portalId === id && lastAction.status === 'success'
             ? (Date.now() - Date.parse(lastAction.timestamp)) / 1000
@@ -50,10 +60,11 @@ export function SceneEffects({
         const jitter = motion.matches
           ? 0
           : fx.shake * Math.sin(time * 37 + index) * Math.sin(time * 19)
-        const boost = id === nearby ? 1.18 : 1
+        const boost = id === nearby ? 1.32 : 1
         // The closed core is genuinely dim; baked scene art contains no moving portal interiors.
         ctx.save()
-        ctx.translate(p.core.x + jitter, p.core.y + jitter * 0.6)
+        // Distort the field inside its fixed aperture, never shift the approved masonry.
+        ctx.translate(p.core.x, p.core.y)
         ctx.scale(p.radius.x, p.radius.y)
         ctx.beginPath()
         ctx.arc(0, 0, 1.13, 0, Math.PI * 2)
@@ -68,15 +79,15 @@ export function SceneEffects({
         ctx.fillStyle = glow
         ctx.fillRect(-2, -2, 4, 4)
         ctx.lineWidth = 0.025
-        for (let ring = 0; ring < 5; ring++) {
+        for (let ring = 0; ring < (closed ? 0 : 5); ring++) {
           const radius = 0.18 + ((ring / 5 + time * fx.speed * 0.23) % 1) * 0.83
-          ctx.globalAlpha = (closed ? 0.03 : 0.55) * (1 - radius * 0.6)
+          ctx.globalAlpha = 0.55 * (1 - radius * 0.6)
           ctx.strokeStyle = color
           const angle = time * fx.speed * direction + ring * 1.9
           ctx.beginPath()
           ctx.ellipse(
-            Math.sin(time + ring) * 0.06,
-            0,
+            Math.sin(time + ring) * 0.06 + jitter / p.radius.x,
+            (jitter * 0.5) / p.radius.y,
             radius,
             radius,
             Math.sin(time * 0.3) * 0.2,
@@ -101,47 +112,99 @@ export function SceneEffects({
         ctx.restore()
         ctx.save()
         ctx.globalCompositeOperation = 'screen'
-        ctx.globalAlpha = Math.min(1, fx.glow * boost * (0.6 + wave * 0.4))
+        ctx.globalAlpha = Math.min(1, fx.glow * boost * (0.48 + wave * 0.52))
         const spill = ctx.createRadialGradient(
           p.core.x,
           p.core.y,
           15,
           p.core.x,
           p.core.y,
-          125,
+          155,
         )
-        spill.addColorStop(0, color + '00')
-        spill.addColorStop(0.48, color + '20')
+        spill.addColorStop(0, color + '48')
+        spill.addColorStop(0.38, color + '65')
+        spill.addColorStop(0.65, color + '20')
         spill.addColorStop(1, color + '00')
         ctx.fillStyle = spill
-        ctx.fillRect(p.core.x - 125, p.core.y - 125, 250, 250)
+        ctx.fillRect(p.core.x - 155, p.core.y - 155, 310, 310)
         ctx.save()
         ctx.translate(p.core.x, p.core.y + p.radius.y + 30)
         ctx.scale(1, 0.25)
         const ground = ctx.createRadialGradient(0, 0, 0, 0, 0, 120)
-        ground.addColorStop(0, color + 'a0')
+        ground.addColorStop(0, color + 'cf')
         ground.addColorStop(1, color + '00')
         ctx.fillStyle = ground
         ctx.fillRect(-120, -120, 240, 240)
         ctx.restore()
-        for (let i = 0; i < fx.particles; i++) {
-          const phase = (i * 0.618 + time * fx.speed * 0.21) % 1
-          const angle = i * 2.399 + time * fx.speed * 0.23 * direction
-          const x = p.core.x + Math.cos(angle) * (p.radius.x + 24 + (i % 5) * 14)
-          const y = p.core.y + 80 - phase * 200 + Math.sin(angle) * 16
-          ctx.globalAlpha = Math.sin(phase * Math.PI) * (closed ? 0.18 : 0.95)
-          ctx.fillStyle = i % 5 === 0 ? '#fff0dd' : color
-          const size = i % 4 === 0 ? 4 : 2
-          ctx.fillRect(Math.round(x), Math.round(y), size, size)
-          if (i % 7 === 0) {
-            ctx.fillRect(x - 3, y + 1, 10, 1)
-            ctx.fillRect(x + 1, y - 3, 1, 10)
+        const particleCount = Math.ceil(fx.particles * (id === nearby ? 1.2 : 1))
+        for (let i = 0; i < particleCount; i++) {
+          const phase = (i * 0.618034 + time * fx.speed * 0.17) % 1
+          const angle = i * 2.39996 + time * fx.orbit * direction
+          const turbulence = fx.turbulence * Math.sin(time * 2.8 + i * 9.2)
+          // Mixed orbits, rising embers and floor sparks avoid a uniform particle curtain.
+          const orbiting = i % 3 === 0
+          const radius = p.radius.x + 15 + (i % 7) * 11 + turbulence * 20
+          let x = p.core.x + Math.cos(angle) * radius
+          let y = orbiting
+            ? p.core.y + Math.sin(angle) * (p.radius.y + 18 + (i % 5) * 11)
+            : p.core.y + 105 - phase * 230 + Math.sin(angle * 1.5) * 20
+          x += turbulence * 14
+          if (fx.turbulence >= 0.6 && i % 7 === 0) {
+            const along = phase * 0.9
+            x = p.approach.x + (836 - p.approach.x) * along + Math.sin(i * 7) * 17
+            y =
+              p.approach.y + (502 - p.approach.y) * along - Math.sin(phase * Math.PI) * 8
+          }
+          const alpha =
+            (0.25 + Math.sin(phase * Math.PI) * 0.75) * (i % 4 === 0 ? 0.95 : 0.62)
+          ctx.globalAlpha = alpha
+          ctx.fillStyle = i % 9 === 0 ? '#fff2ce' : color
+          const size = i % 6 === 0 ? 4 : 2
+          const px = Math.round(x / 2) * 2,
+            py = Math.round(y / 2) * 2
+          ctx.fillRect(px, py, size, size)
+          if (i % 11 === 0 && Math.sin(time * 2 + i) > 0.5) {
+            ctx.fillRect(px - 4, py, 10, 2)
+            ctx.fillRect(px, py - 4, 2, 10)
+          }
+          if (fx.turbulence >= 0.6 && i % 4 === 0) {
+            ctx.globalAlpha = alpha * 0.25
+            ctx.fillRect(px - Math.round(Math.sin(angle) * 5) * 2, py + 6, 4, 4)
+          }
+        }
+        // Shimmer is anchored to the existing rim, with no new facade or silhouette.
+        if (!closed) {
+          for (let i = 0; i < 26; i++) {
+            const angle = (i / 26) * Math.PI * 2
+            const shimmer = Math.max(0, Math.sin(time * (0.9 + fx.speed) + i * 1.8))
+            ctx.globalAlpha = shimmer * 0.7 * fx.glow
+            ctx.fillStyle = i % 4 === 0 ? '#fff4d0' : color
+            ctx.fillRect(
+              Math.round((p.core.x + Math.cos(angle) * p.radius.x * 1.14) / 2) * 2,
+              Math.round((p.core.y + Math.sin(angle) * p.radius.y * 1.13) / 2) * 2,
+              4,
+              4,
+            )
           }
         }
         ctx.restore()
+        const proximityAge = (now - proximity.current.since) / 1000
+        if (!closed && id === nearby && proximityAge < 0.9 && !motion.matches) {
+          ctx.save()
+          ctx.globalAlpha = (1 - proximityAge / 0.9) * 0.7
+          pixelRing(
+            ctx,
+            p.core.x,
+            p.core.y,
+            p.radius.x + 8 + proximityAge * 28,
+            p.radius.y + 8 + proximityAge * 28,
+            '#fff0bf',
+          )
+          ctx.restore()
+        }
         // Blocky local outbursts and stepped shockwaves, never camera shake.
         const burstPhase = (time + index * 0.43) % (4.2 - fx.shake * 0.45)
-        if (!closed && fx.burst > 0 && burstPhase < 0.65) {
+        if (!motion.matches && !closed && fx.burst > 0 && burstPhase < 0.65) {
           ctx.save()
           ctx.fillStyle = color
           ctx.globalAlpha = (1 - burstPhase / 0.65) * 0.8
@@ -155,7 +218,7 @@ export function SceneEffects({
               4,
             )
           }
-          if (fx.shake >= 5)
+          if (fx.turbulence >= 1)
             pixelRing(
               ctx,
               p.core.x,
@@ -252,38 +315,65 @@ export function SceneEffects({
             ctx.fillText('×' + creatures, p.core.x - 9, p.core.y + p.radius.y + 32)
           }
           ctx.restore()
+          // A tiny eye seal beside the frame stays legible through a busy critical aura.
+          ctx.save()
+          const badgeX = p.core.x + p.radius.x + 15,
+            badgeY = p.core.y - p.radius.y - 16
+          ctx.globalAlpha = closed ? 0.55 : 0.78 + wave * 0.22
+          ctx.fillStyle = '#0a101be8'
+          ctx.fillRect(badgeX - 2, badgeY - 2, 25, 21)
+          ctx.fillStyle = fx.turbulence >= 0.6 ? '#ffd39a' : '#ccdbbd'
+          ctx.fillRect(badgeX + 4, badgeY + 3, 12, 2)
+          ctx.fillRect(badgeX + 1, badgeY + 5, 18, 6)
+          ctx.fillRect(badgeX + 4, badgeY + 11, 12, 2)
+          ctx.fillStyle = '#111524'
+          ctx.fillRect(badgeX + 8, badgeY + 5, 4, 6)
+          ctx.restore()
         }
       }
       ctx.save()
       ctx.globalCompositeOperation = 'screen'
       ambientLights.forEach((p, i) => {
+        const fireColor = p.color ?? '#ffb54e'
         const flicker =
-          0.1 + (Math.sin(time * 7 + i) + Math.sin(time * 11 + i * 3)) * 0.025
-        const glow = ctx.createRadialGradient(p.x, p.y, 2, p.x, p.y, 40)
-        glow.addColorStop(0, '#ffbf69')
-        glow.addColorStop(1, '#ff8b2400')
+          0.18 + (Math.sin(time * 4 + i) + Math.sin(time * 7 + i * 3)) * 0.035
+        const glow = ctx.createRadialGradient(p.x, p.y, 2, p.x, p.y, 56)
+        glow.addColorStop(0, fireColor)
+        glow.addColorStop(1, fireColor + '00')
         ctx.globalAlpha = flicker
         ctx.fillStyle = glow
-        ctx.fillRect(p.x - 40, p.y - 40, 80, 80)
-        const flame = Math.floor((time * 7 + i) % 3)
-        ctx.globalAlpha = 0.65
-        ctx.fillStyle = '#ff9f43'
-        ctx.fillRect(p.x - 3, p.y - 7 - flame * 2, 6, 10 + flame * 2)
+        ctx.fillRect(p.x - 56, p.y - 56, 112, 112)
+        const flame = Math.floor((time * 9 + i) % 4)
+        ctx.globalAlpha = 0.8
+        ctx.fillStyle = p.color ?? '#ff7636'
+        ctx.fillRect(p.x - 4, p.y - 6, 8, 10)
+        ctx.fillStyle = fireColor
+        ctx.fillRect(p.x - 3 + (flame % 2) * 2, p.y - 8 - flame * 2, 4, 12 + flame * 2)
         ctx.fillStyle = '#ffe4a0'
         ctx.fillRect(p.x - 1, p.y - 6, 3, 8)
+        for (let spark = 0; spark < 3; spark++) {
+          const phase = (time * 0.32 + i * 0.31 + spark / 3) % 1
+          ctx.globalAlpha = (1 - phase) * 0.55
+          ctx.fillStyle = spark % 2 ? fireColor : '#ffe5a2'
+          ctx.fillRect(p.x + Math.sin(time + i + spark) * 9, p.y - 13 - phase * 40, 2, 2)
+        }
       })
-      for (let i = 0; i < 38; i++) {
-        const x = 300 + ((i * 97.7 + time * (3 + (i % 3))) % 1072)
-        const y = 290 + ((i * 67.1 - time * 4 + 6000) % 480)
-        ctx.globalAlpha = 0.15 + Math.sin(time * 0.8 + i) * 0.1
-        ctx.fillStyle = '#ffe6ac'
-        ctx.fillRect(x, y, 2, 2)
+      for (let i = 0; i < 110; i++) {
+        const x = 110 + ((i * 97.7 + time * (3 + (i % 3))) % 1440)
+        const y = 180 + ((i * 67.1 - time * 4 + 6000) % 650)
+        ctx.globalAlpha = 0.14 + Math.sin(time * 0.8 + i) * 0.12
+        ctx.fillStyle = i % 5 ? '#ffe6ac' : '#b7eed8'
+        ctx.fillRect(Math.round(x / 2) * 2, Math.round(y / 2) * 2, 2, 2)
+        if (i % 17 === 0) {
+          ctx.fillRect(Math.round(x / 2) * 2 - 2, Math.round(y / 2) * 2, 6, 2)
+        }
       }
       ctx.restore()
       if (!motion.matches && !document.hidden) frame = requestAnimationFrame(draw)
     }
     const restart = () => {
       cancelAnimationFrame(frame)
+      lastPaint = -Infinity
       draw(performance.now())
     }
     restart()

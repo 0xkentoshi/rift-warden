@@ -89,7 +89,12 @@ export function SystemReportPanel({
               {priorityPortals(portals).length ? (
                 priorityPortals(portals).map((portal, index) => (
                   <button
-                    className="priority-row"
+                    className={
+                      'priority-row' +
+                      (index === 0 && calculateRisk(portal).score >= 50
+                        ? ' priority-row--urgent'
+                        : '')
+                    }
                     key={portal.id}
                     onClick={() => onSelectPortal(portal.id)}
                   >

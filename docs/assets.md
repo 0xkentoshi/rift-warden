@@ -19,3 +19,9 @@
 Музыка src/assets/rift-warden-ambient-v070.wav взята из исходного проекта без изменений.
 Старые lab-hub-v070.png и warden-sprites-v070.png больше не используются приложением; оставлены на диске как исходные материалы, чтобы не уничтожать работу автора.
 Происхождение/лицензии исходного референса и музыки отдельно не верифицировались.
+
+## Pixelify Sans
+
+Локальный variable TTF: `src/assets/fonts/PixelifySans.ttf` (79 КБ). Источник — [официальный Google Fonts](https://github.com/google/fonts/tree/main/ofl/pixelifysans), автор Stefie Justprince / The Pixelify Sans Project Authors; исходный проект [eifetx/Pixelify-Sans](https://github.com/eifetx/Pixelify-Sans). Поддержка кириллицы и диапазона 400–700 указана в [METADATA.pb](https://github.com/google/fonts/blob/main/ofl/pixelifysans/METADATA.pb). Шрифт не модифицирован; OFL 1.1 сохранена рядом с ним и в `public/licenses/PixelifySans-OFL.txt`, который включается в статическую сборку. Системная установка шрифта и CDN не используются.
+
+Фон в полировке после v3 не редактировался. Огонь, пыль, ауры, знаки существ и переходы рисуются программно в существующем Canvas; геометрия арок и их позиции прежние.

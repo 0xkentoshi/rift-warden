@@ -37,6 +37,12 @@ const stages = [
     'Зафиксировал SHA-256 ассета; расширил карту движения до ступеней, добавил предпросмотр, защиту повторных действий, подтверждение сброса, VFX и индикаторы существ. Проверил транзакции и UI.',
     'Фон финальный. Дальше только walkable map, collision, proximity, персонаж, VFX, существа, огонь и UI поверх него.',
   ],
+  [
+    'Живая сцена и pixel UI',
+    'Указал на слабую атмосферу, слишком обычные шрифты и остановку на наклонных краях. Попросил полировочный патч, сохранив фон и предметную логику.',
+    'Добавил скольжение по касательной, поворот спрайта по фактическому движению, микрошаг, усиленные risk-driven эффекты, огни на существующих свечах и локальный Pixelify Sans. Проверил русские/английские панели и геометрию движения.',
+    'Убрать ощущение статичного фона; CRITICAL должен быть на порядок активнее LOW; интерфейс — аккуратная cozy fantasy pixel RPG.',
+  ],
 ]
 const stagesEn = [
   [
@@ -74,6 +80,12 @@ const stagesEn = [
     'Specified lower portal orientation and traversable stairs, approved the final background and locked its geometry.',
     'Recorded its SHA-256; extended navigation onto stairs, added previews, repeat-action guards, reset confirmation, VFX and creature indicators. Tested transactions and UI.',
     'The background is final. Continue with walkable routes, collision, proximity, character, VFX, creatures, fire and UI over it.',
+  ],
+  [
+    'Living scene and pixel UI',
+    'Reported weak atmosphere, conventional fonts and snagging on sloping edges. Requested a polish patch preserving the background and domain logic.',
+    'Added tangent sliding, facing based on actual movement, subtle gait, richer risk-driven effects, existing candle flames and local Pixelify Sans. Checked Russian/English panels and movement geometry.',
+    'Remove the static-background feel; CRITICAL should be an order of magnitude more active than LOW; use a cohesive cozy fantasy pixel RPG interface.',
   ],
 ]
 export function AIWorklog({
@@ -171,6 +183,11 @@ export function AIWorklog({
         {ru
           ? 'В v3 ImageGen несколько раз сместил нижние порталы вместо разворота, оставил двойные контуры или сделал чёрную арку лежащей. Автор отклонил эти варианты и уточнил геометрические критерии. Принятый результат зафиксирован без дальнейшей генерации. При проверке кода обнаружен неподдерживаемый параметр exact в двух тестовых запросах Testing Library; исправлен перед production-сборкой.'
           : 'In v3, ImageGen repeatedly shifted portals instead of rotating their perspective, left doubled outlines or made the black arch horizontal. The author rejected these results and refined the geometric criteria. The approved asset was locked. Type checking also caught an unsupported exact option in two Testing Library queries; it was fixed before the production build.'}
+      </p>
+      <p>
+        {ru
+          ? 'После v3 автор справедливо отметил, что скольжение только по X/Y не решает застревание на наклонных дорожках, а Courier не заменяет пиксельный шрифт. AI исправил оба упрощения. При повторной проверке также найден преждевременный текст «наблюдатель отправлен» в предпросмотре: заменён описанием будущего действия до подтверждения.'
+          : 'After v3, the author pointed out that X/Y-only sliding still snags on sloping paths and Courier is not a pixel font. AI corrected both shortcuts. Browser review also found premature “observer sent” wording in the preview; it now describes the future action until confirmed.'}
       </p>
       <h3>{ru ? 'Что сделано вручную' : 'Manual contributions'}</h3>
       <p>

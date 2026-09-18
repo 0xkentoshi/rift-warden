@@ -30,7 +30,14 @@ export function Hud(p: Props) {
           aria-label={p.language === 'ru' ? 'Состояние лаборатории' : 'Laboratory status'}
         >
           {(['open', 'critical', 'attention', 'closed'] as const).map((key) => (
-            <div className={'hud__stat hud__stat--' + key} key={key}>
+            <div
+              className={
+                'hud__stat hud__stat--' +
+                key +
+                (key === 'critical' && report.critical > 0 ? ' is-alert' : '')
+              }
+              key={key}
+            >
               <span>{t(p.language, key)}</span>
               <strong className="counter-value" key={report[key]}>
                 {report[key]}

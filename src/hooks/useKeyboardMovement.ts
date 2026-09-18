@@ -47,12 +47,23 @@ export function useKeyboardMovement(enabled: boolean) {
         x: vector.dx * 170 * seconds,
         y: vector.dy * 170 * seconds,
       })
-      const moving = Math.hypot(position.x - previous.x, position.y - previous.y) > 0.01
+      const movedX = position.x - previous.x,
+        movedY = position.y - previous.y
+      const moving = Math.hypot(movedX, movedY) > 0.01
+      const facing: MovementDirection | null = moving
+        ? Math.abs(movedX) > Math.abs(movedY)
+          ? movedX > 0
+            ? 'right'
+            : 'left'
+          : movedY > 0
+            ? 'down'
+            : 'up'
+        : vector.direction
       positionRef.current = position
       setState((s) =>
-        !moving && !s.moving && (!vector.direction || vector.direction === s.direction)
+        !moving && !s.moving && (!facing || facing === s.direction)
           ? s
-          : { position, moving, direction: vector.direction ?? s.direction },
+          : { position, moving, direction: facing ?? s.direction },
       )
       frame = requestAnimationFrame(tick)
     }

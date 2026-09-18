@@ -1,5 +1,12 @@
+@font-face {
+  font-family: 'Pixelify Sans';
+  src: url('./assets/fonts/PixelifySans.ttf') format('truetype');
+  font-weight: 400 700;
+  font-display: swap;
+}
 :root {
-  font-family: 'Segoe UI', sans-serif;
+  --font-pixel: 'Pixelify Sans', monospace;
+  font-family: var(--font-pixel);
   color: #f3e9d4;
   background: #0d0d12;
   font-synthesis: none;
@@ -388,6 +395,7 @@ kbd {
   background: url('./assets/warden-walk.png') 50% var(--sprite-y) / 300% 400% no-repeat;
   image-rendering: pixelated;
   filter: drop-shadow(0 2px 1px #0007);
+  transition: transform 90ms steps(3);
 }
 .character__shadow {
   position: absolute;
@@ -400,7 +408,27 @@ kbd {
   filter: blur(2px);
 }
 .character--moving .character__sprite {
-  animation: walk 0.48s steps(1) infinite;
+  animation:
+    walk 0.52s steps(1) infinite,
+    step-bob 0.26s steps(2) infinite;
+}
+.character--moving .character__shadow {
+  animation: step-shadow 0.26s steps(2) infinite;
+}
+@keyframes step-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1px);
+  }
+}
+@keyframes step-shadow {
+  50% {
+    opacity: 0.78;
+    transform: scaleX(0.94);
+  }
 }
 @keyframes walk {
   0%,

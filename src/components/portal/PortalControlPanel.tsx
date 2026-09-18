@@ -241,20 +241,20 @@ export function PortalControlPanel({
               <span style={{ width: `${risk.score}%` }} />
             </div>
 
-            <div className="risk-console__factors">
-              {risk.factors.length > 0 ? (
-                risk.factors.map((factor) => (
-                  <div key={`${factor.code}-${factor.points}`}>
-                    <span>{riskFactorLabel(language, factor.code)}</span>
-                    <strong>+{factor.points}</strong>
-                  </div>
-                ))
-              ) : (
-                <p>{t(language, 'noRiskFactors')}</p>
-              )}
-            </div>
             <details className="risk-formula">
               <summary>{ru ? 'Как считается риск?' : 'How is risk calculated?'}</summary>
+              <div className="risk-console__factors">
+                {risk.factors.length > 0 ? (
+                  risk.factors.map((factor) => (
+                    <div key={`${factor.code}-${factor.points}`}>
+                      <span>{riskFactorLabel(language, factor.code)}</span>
+                      <strong>+{factor.points}</strong>
+                    </div>
+                  ))
+                ) : (
+                  <p>{t(language, 'noRiskFactors')}</p>
+                )}
+              </div>
               <p>
                 {ru
                   ? 'Сумма факторов, максимум 100. Стабильность ≤20/40/60: +35/25/10. Энергия ≥90/75/60: +25/15/5. До схлопывания ≤5/15/30 мин: +25/15/5. Существ ≥6: +15; 1–5: +8. Под вопросом: +10. В каждой группе берётся один порог. Закрытый портал: 0.'
@@ -385,7 +385,9 @@ export function PortalControlPanel({
               </dl>
               <p className="subtle-copy">
                 {pendingAction === 'observe'
-                  ? t(language, 'observerTelemetry')
+                  ? ru
+                    ? 'После подтверждения наблюдатель проверит портал. Показания останутся прежними; результат появится в журнале.'
+                    : 'After confirmation, an observer will inspect the portal. Readings stay unchanged; the result is recorded in the journal.'
                   : ru
                     ? 'Это прогноз. Данные изменятся только после подтверждения.'
                     : 'This is a preview. Data changes only after confirmation.'}

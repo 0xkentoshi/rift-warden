@@ -92,11 +92,85 @@ export function moveWithCollisions(
 ): Point {
   let next = { ...position }
   const steps = Math.max(1, Math.ceil(Math.hypot(delta.x, delta.y) / (PLAYER_RADIUS / 2)))
+  const step = { x: delta.x / steps, y: delta.y / steps }
   for (let i = 0; i < steps; i++) {
-    const x = { x: next.x + delta.x / steps, y: next.y }
-    if (!isBlocked(x, obstacles, constrainToPaths)) next = x
-    const y = { x: next.x, y: next.y + delta.y / steps }
-    if (!isBlocked(y, obstacles, constrainToPaths)) next = y
+    const desired = { x: next.x + step.x, y: next.y + step.y }
+    if (!isBlocked(desired, obstacles, constrainToPaths)) {
+      next = desired
+      continue
+    }
+    // Preserve a free axis, then consider the tangent of a sloping path or rounded
+    // obstacle. Every candidate still passes the same collision map; no snapping
+    // or teleporting across a narrow gap, and no motion after key release.
+    const candidates: Point[] = [
+      { x: next.x + step.x, y: next.y },
+      { x: next.x, y: next.y + step.y },
+    ]
+    const slide = (normal: Point) => {
+      const length = Math.hypot(normal.x, normal.y)
+      if (length < 0.0001) return
+      const nx = normal.x / length,
+        ny = normal.y / length
+      const into = step.x * nx + step.y * ny
+      if (into <= 0) return
+      const tangent = { x: step.x - nx * into, y: step.y - ny * into }
+      if (Math.hypot(tangent.x, tangent.y) < 0.001) return
+      // Tiny inward clearance lets a tangent follow a curved edge without snagging.
+      candidates.push({
+        x: next.x + tangent.x - nx * 0.04,
+        y: next.y + tangent.y - ny * 0.04,
+      })
+    }
+    if (constrainToPaths) {
+      for (const zone of walkableZones) {
+        if (!inWalkableZone(next, zone) || inWalkableZone(desired, zone)) continue
+        if (zone.type === 'ellipse') {
+          slide({
+            x: (next.x - zone.center.x) / (zone.radius.x - PLAYER_RADIUS) ** 2,
+            y: (next.y - zone.center.y) / (zone.radius.y - PLAYER_RADIUS) ** 2,
+          })
+        } else {
+          const dx = zone.to.x - zone.from.x,
+            dy = zone.to.y - zone.from.y
+          const t = Math.max(
+            0,
+            Math.min(
+              1,
+              ((next.x - zone.from.x) * dx + (next.y - zone.from.y) * dy) /
+                (dx * dx + dy * dy),
+            ),
+          )
+          slide({ x: next.x - zone.from.x - t * dx, y: next.y - zone.from.y - t * dy })
+        }
+      }
+    }
+    for (const rect of obstacles) {
+      const closest = {
+        x: Math.max(rect.x, Math.min(next.x, rect.x + rect.width)),
+        y: Math.max(rect.y, Math.min(next.y, rect.y + rect.height)),
+      }
+      if (
+        Math.hypot(next.x - closest.x, next.y - closest.y) <=
+        PLAYER_RADIUS + Math.hypot(step.x, step.y)
+      )
+        slide({ x: closest.x - next.x, y: closest.y - next.y })
+    }
+    let best = next,
+      progress = 0
+    for (const candidate of candidates) {
+      const dx = candidate.x - next.x,
+        dy = candidate.y - next.y
+      const forward = dx * step.x + dy * step.y
+      if (
+        forward > progress &&
+        Math.hypot(dx, dy) <= Math.hypot(step.x, step.y) + 0.001 &&
+        !isBlocked(candidate, obstacles, constrainToPaths)
+      ) {
+        best = candidate
+        progress = forward
+      }
+    }
+    next = best
   }
   return next
 }

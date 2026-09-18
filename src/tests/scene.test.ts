@@ -88,6 +88,49 @@ describe('scene movement and coordinates', () => {
     expect(next.y).toBeCloseTo(200)
     expect(isBlocked(next, obstacles)).toBe(false)
   })
+  it.each(['southwest-path', 'southeast-path'])(
+    'slides along the diagonal edge of %s instead of stalling',
+    (id) => {
+      const zone = walkableZones.find((z) => z.id === id)!
+      if (zone.type !== 'path') throw new Error('Expected a path')
+      const dx = zone.to.x - zone.from.x,
+        dy = zone.to.y - zone.from.y
+      const length = Math.hypot(dx, dy),
+        sign = Math.sign(dx)
+      // Stand just inside the lower edge, then press down into the sloped boundary.
+      const start = {
+        x: (zone.from.x + zone.to.x) / 2 - (dy / length) * sign * 19.8,
+        y: (zone.from.y + zone.to.y) / 2 + (dx / length) * sign * 19.8,
+      }
+      expect(isBlocked(start)).toBe(false)
+      let position = start
+      for (let frame = 0; frame < 25; frame++) {
+        const next = moveWithCollisions(position, { x: 0, y: 2.7 })
+        expect(isBlocked(next)).toBe(false)
+        expect(Math.hypot(next.x - position.x, next.y - position.y)).toBeLessThanOrEqual(
+          2.701,
+        )
+        position = next
+      }
+      expect((position.x - start.x) * sign).toBeGreaterThan(10)
+      expect(position.y).toBeGreaterThan(start.y)
+      expect(moveWithCollisions(position, { x: 0, y: 0 })).toEqual(position)
+    },
+  )
+  it('slides past a rounded furniture corner, but cannot cut through a solid corner', () => {
+    const furniture = [{ id: 'cabinet', x: 100, y: 100, width: 60, height: 60 }]
+    const next = moveWithCollisions({ x: 90, y: 95 }, { x: 2, y: 0 }, furniture)
+    expect(next.x).toBeGreaterThan(90)
+    expect(next.y).toBeLessThan(95)
+    expect(isBlocked(next, furniture)).toBe(false)
+    const walls = [
+      { id: 'east', x: 100, y: 0, width: 20, height: 200 },
+      { id: 'south', x: 0, y: 100, width: 200, height: 20 },
+    ]
+    const stop = moveWithCollisions({ x: 88, y: 88 }, { x: 100, y: 100 }, walls)
+    expect(stop.x).toBeLessThan(89)
+    expect(stop.y).toBeLessThan(89)
+  })
   it('makes every interaction point walkable and selects only an in-range portal', () => {
     const ids = Object.keys(portalPositions)
     expect(nearestPortal(START_POSITION, ids)).toBeNull()
@@ -182,6 +225,12 @@ describe('state-driven presentation', () => {
     })
     expect(riskToVfx('CRITICAL', 'closed').glow).toBeLessThan(
       riskToVfx('LOW', 'open').glow,
+    )
+    expect(riskToVfx('CRITICAL', 'open').particles).toBeGreaterThanOrEqual(
+      riskToVfx('LOW', 'open').particles * 10,
+    )
+    expect(Object.values(riskToVfx('CRITICAL', 'closed')).every((v) => v === 0)).toBe(
+      true,
     )
   })
   it('recommends safe actions and sorts the priority queue by risk', () => {

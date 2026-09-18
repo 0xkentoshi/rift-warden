@@ -3,6 +3,8 @@ import { calculateRisk } from '../../domain/risk/calculateRisk'
 import { riskLevelLabel, t, type Language } from '../../i18n/translations'
 import type { Portal } from '../../types/portal'
 import { Modal } from './Modal'
+import { portalPositions } from '../../data/labLayout'
+import type { CSSProperties } from 'react'
 export function PortalRegistry({
   portals,
   language,
@@ -62,11 +64,21 @@ export function PortalRegistry({
               </tr>
             </thead>
             <tbody>
-              {visible.map((portal) => {
+              {visible.map((portal, index) => {
                 const risk = calculateRisk(portal)
                 return (
-                  <tr key={portal.id}>
+                  <tr
+                    key={portal.id}
+                    style={
+                      {
+                        '--portal-ink': portalPositions[portal.id]?.color ?? '#c4ad79',
+                      } as CSSProperties
+                    }
+                  >
                     <td>
+                      <span className="registry-seal" aria-hidden="true">
+                        {String(index + 1).padStart(2, '0')}
+                      </span>
                       <button className="text-button" onClick={() => onSelect(portal.id)}>
                         {portal.name} ↗
                       </button>
