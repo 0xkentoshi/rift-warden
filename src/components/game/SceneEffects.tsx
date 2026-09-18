@@ -315,20 +315,6 @@ export function SceneEffects({
             ctx.fillText('×' + creatures, p.core.x - 9, p.core.y + p.radius.y + 32)
           }
           ctx.restore()
-          // A tiny eye seal beside the frame stays legible through a busy critical aura.
-          ctx.save()
-          const badgeX = p.core.x + p.radius.x + 15,
-            badgeY = p.core.y - p.radius.y - 16
-          ctx.globalAlpha = closed ? 0.55 : 0.78 + wave * 0.22
-          ctx.fillStyle = '#0a101be8'
-          ctx.fillRect(badgeX - 2, badgeY - 2, 25, 21)
-          ctx.fillStyle = fx.turbulence >= 0.6 ? '#ffd39a' : '#ccdbbd'
-          ctx.fillRect(badgeX + 4, badgeY + 3, 12, 2)
-          ctx.fillRect(badgeX + 1, badgeY + 5, 18, 6)
-          ctx.fillRect(badgeX + 4, badgeY + 11, 12, 2)
-          ctx.fillStyle = '#111524'
-          ctx.fillRect(badgeX + 8, badgeY + 5, 4, 6)
-          ctx.restore()
         }
       }
       ctx.save()

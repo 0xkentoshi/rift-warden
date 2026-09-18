@@ -1,12 +1,20 @@
 @font-face {
-  font-family: 'Pixelify Sans';
-  src: url('./assets/fonts/PixelifySans.ttf') format('truetype');
-  font-weight: 400 700;
+  font-family: 'Press Start 2P';
+  src: url('./assets/fonts/PressStart2P-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PT Mono';
+  src: url('./assets/fonts/PTMono-Regular.ttf') format('truetype');
+  font-weight: 400;
   font-display: swap;
 }
 :root {
-  --font-pixel: 'Pixelify Sans', monospace;
-  font-family: var(--font-pixel);
+  --font-pixel: 'Press Start 2P', monospace;
+  --font-readable: 'PT Mono', monospace;
+  font-family: var(--font-readable);
+  font-variant-numeric: tabular-nums;
   color: #f3e9d4;
   background: #0d0d12;
   font-synthesis: none;
@@ -129,7 +137,7 @@ button {
   white-space: nowrap;
 }
 .hud__brand-main {
-  font-family: 'Courier New', monospace;
+  font-family: var(--font-readable);
   font-size: clamp(20px, 2.1vw, 36px);
   font-weight: 900;
   letter-spacing: 0.07em;
@@ -142,9 +150,7 @@ button {
 }
 .hud__brand-sub {
   padding-left: 28px;
-  font:
-    9px 'Courier New',
-    monospace;
+  font: 9px var(--font-readable);
   letter-spacing: 0.12em;
   color: #c5c0b2;
 }
@@ -171,9 +177,7 @@ button {
   letter-spacing: 0.04em;
 }
 .hud__stat strong {
-  font:
-    bold 27px 'Courier New',
-    monospace;
+  font: bold 27px var(--font-readable);
 }
 .hud__stat--critical {
   color: #ff575b;
@@ -274,9 +278,7 @@ button {
   padding: 8px 20px;
   background: linear-gradient(transparent, #0b0b13ed);
   color: #c4bdbe;
-  font:
-    9px 'Courier New',
-    monospace;
+  font: 9px var(--font-readable);
   letter-spacing: 0.05em;
 }
 .scene-status {
@@ -297,9 +299,7 @@ button {
 }
 kbd {
   padding: 3px 5px;
-  font:
-    10px 'Courier New',
-    monospace;
+  font: 10px var(--font-readable);
   border: 1px solid #9f8c8459;
   border-radius: 3px;
   background: #181722b8;
@@ -351,7 +351,7 @@ kbd {
 }
 .portal-label strong {
   font-size: 14px;
-  font-family: 'Courier New', monospace;
+  font-family: var(--font-readable);
   font-weight: 900;
   letter-spacing: 0.02em;
 }
@@ -392,7 +392,8 @@ kbd {
 .character__sprite {
   position: absolute;
   inset: 0;
-  background: url('./assets/warden-walk.png') 50% var(--sprite-y) / 300% 400% no-repeat;
+  background: url('./assets/lab-worker-walk.png') 50% var(--sprite-y) / 300% 400%
+    no-repeat;
   image-rendering: pixelated;
   filter: drop-shadow(0 2px 1px #0007);
   transition: transform 90ms steps(3);
@@ -433,14 +434,14 @@ kbd {
 @keyframes walk {
   0%,
   100% {
-    background-position-x: 0%;
+    background-position: 0% var(--sprite-step-y);
   }
   25%,
   75% {
-    background-position-x: 50%;
+    background-position: 50% var(--sprite-y);
   }
   50% {
-    background-position-x: 100%;
+    background-position: 100% var(--sprite-step-y);
   }
 }
 .collision-debug {
@@ -493,9 +494,7 @@ kbd {
   color: #ecc77c;
 }
 .first-hint strong {
-  font:
-    900 13px 'Courier New',
-    monospace;
+  font: 900 13px var(--font-readable);
   color: #f2dca9;
   letter-spacing: 0.04em;
 }

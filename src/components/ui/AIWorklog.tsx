@@ -43,6 +43,12 @@ const stages = [
     'Добавил скольжение по касательной, поворот спрайта по фактическому движению, микрошаг, усиленные risk-driven эффекты, огни на существующих свечах и локальный Pixelify Sans. Проверил русские/английские панели и геометрию движения.',
     'Убрать ощущение статичного фона; CRITICAL должен быть на порядок активнее LOW; интерфейс — аккуратная cozy fantasy pixel RPG.',
   ],
+  [
+    'Читаемость и лаборант',
+    'Отклонил нечитаемый шрифт, попросил убрать значки глаз и заменить героя маленьким лаборантом по новому референсу без буквального копирования.',
+    'Убрал значки глаз, заменил Pixelify Sans парой Press Start 2P для заголовков и PT Mono для текста/цифр. ImageGen создал оригинального лаборанта; Codex выровнял кадры ходьбы по подошвам и проверил RU/EN и узкий экран.',
+    'Сохранить стиль, но сделать буквы и цифры читаемыми; маленький пиксельный работник лаборатории. Фон зафиксирован.',
+  ],
 ]
 const stagesEn = [
   [
@@ -86,6 +92,12 @@ const stagesEn = [
     'Reported weak atmosphere, conventional fonts and snagging on sloping edges. Requested a polish patch preserving the background and domain logic.',
     'Added tangent sliding, facing based on actual movement, subtle gait, richer risk-driven effects, existing candle flames and local Pixelify Sans. Checked Russian/English panels and movement geometry.',
     'Remove the static-background feel; CRITICAL should be an order of magnitude more active than LOW; use a cohesive cozy fantasy pixel RPG interface.',
+  ],
+  [
+    'Readability and lab worker',
+    'Rejected the hard-to-read font and requested removal of eye badges and an original small lab worker inspired by a new reference.',
+    'Removed the eye badges and replaced Pixelify Sans with Press Start 2P headings and PT Mono copy/numbers. ImageGen created the original worker; Codex aligned walk frames at the soles and checked RU/EN and narrow layouts.',
+    'Keep the style but make letters and numbers readable; use a small pixel lab worker. Keep the background locked.',
   ],
 ]
 export function AIWorklog({
@@ -188,6 +200,11 @@ export function AIWorklog({
         {ru
           ? 'После v3 автор справедливо отметил, что скольжение только по X/Y не решает застревание на наклонных дорожках, а Courier не заменяет пиксельный шрифт. AI исправил оба упрощения. При повторной проверке также найден преждевременный текст «наблюдатель отправлен» в предпросмотре: заменён описанием будущего действия до подтверждения.'
           : 'After v3, the author pointed out that X/Y-only sliding still snags on sloping paths and Courier is not a pixel font. AI corrected both shortcuts. Browser review also found premature “observer sent” wording in the preview; it now describes the future action until confirmed.'}
+      </p>
+      <p>
+        {ru
+          ? 'Pixelify Sans подходил по стилю, но автор заметил плохую читаемость кириллицы, латиницы и цифр. AI заменил его: пиксельные заголовки сохранены, мелкий текст и значения переведены на PT Mono. У нового sprite sheet строки оказались не идеально равномерными; смещения кадров откалиброваны в CSS без изменения movement system.'
+          : 'Pixelify Sans matched the style but the author found Cyrillic, Latin and numbers hard to read. AI replaced it with pixel headings and PT Mono copy/values. The generated sprite rows were not perfectly uniform, so CSS frame offsets were calibrated without changing the movement system.'}
       </p>
       <h3>{ru ? 'Что сделано вручную' : 'Manual contributions'}</h3>
       <p>

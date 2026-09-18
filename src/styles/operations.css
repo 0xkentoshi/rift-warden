@@ -461,17 +461,13 @@
 }
 .ops-panel__eyebrow,
 .portal-panel__eyebrow {
-  font:
-    10px 'Courier New',
-    monospace;
+  font: 10px var(--font-readable);
   letter-spacing: 0.14em;
   color: #d8c4a5;
 }
 .portal-panel h2,
 .ops-panel h2 {
-  font:
-    900 27px 'Courier New',
-    monospace;
+  font: 900 27px var(--font-readable);
   text-shadow: 2px 2px #090f13;
 }
 h3 {
@@ -529,9 +525,7 @@ button:hover {
   width: 40px;
   background: #152b2b;
   border: 2px solid #8d79517a;
-  font:
-    bold 12px 'Courier New',
-    monospace;
+  font: bold 12px var(--font-readable);
 }
 .action-preview {
   border: 2px solid #b99e61;
@@ -557,9 +551,7 @@ button:hover {
 }
 .preview-grid dd {
   margin: 0;
-  font:
-    bold 12px 'Courier New',
-    monospace;
+  font: bold 12px var(--font-readable);
 }
 .preview-grid b {
   color: #b8f5ce;
@@ -597,9 +589,7 @@ button:hover {
 }
 .world-toast strong {
   color: #b8f5cf;
-  font:
-    bold 14px 'Courier New',
-    monospace;
+  font: bold 14px var(--font-readable);
 }
 .world-toast span {
   font-size: 11px;
@@ -666,7 +656,7 @@ button:hover {
   font-size: 24px;
 }
 .risk-console__score {
-  font-family: 'Courier New', monospace;
+  font-family: var(--font-readable);
   font-weight: 700;
 }
 .risk-formula {
@@ -843,9 +833,7 @@ button:hover {
   color: #d7c9d0;
 }
 .stage-number {
-  font:
-    28px 'Courier New',
-    monospace;
+  font: 28px var(--font-readable);
   color: #a289a2;
 }
 .worklog-stage blockquote {

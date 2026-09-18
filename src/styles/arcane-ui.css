@@ -1,4 +1,4 @@
-/* Shared pixel typography and notched bronze frames for the existing UI. */
+/* Pixel headings, readable console copy and notched bronze frames. */
 :root {
   --pixel-corners: polygon(
     0 8px,
@@ -53,12 +53,19 @@ kbd,
 .risk-console__score,
 .stage-number,
 .first-hint strong {
+  font-family: var(--font-readable);
+}
+.hud__brand-main,
+.portal-label strong,
+.portal-panel h2,
+.ops-panel h2 {
   font-family: var(--font-pixel);
+  font-weight: 400;
+  line-height: 1.65;
 }
 .hud__brand-main {
-  font-size: clamp(24px, 2.3vw, 38px);
-  font-weight: 700;
-  letter-spacing: 0.03em;
+  font-size: 24px;
+  letter-spacing: -0.04em;
 }
 .hud__brand-sub {
   font-size: 12px;
@@ -162,8 +169,8 @@ kbd {
   box-shadow: none;
 }
 .portal-label strong {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 400;
 }
 .portal-label small,
 .portal-label > span {
@@ -187,8 +194,8 @@ kbd {
   border: 4px solid #ad9663;
   background:
     repeating-linear-gradient(0deg, #ffffff02 0 2px, transparent 2px 6px), #152023;
-  font-size: 17px;
-  line-height: 1.45;
+  font-size: 15px;
+  line-height: 1.6;
   scrollbar-width: thin;
   scrollbar-color: #ad9663 #111b1c;
 }
@@ -201,9 +208,10 @@ kbd {
 }
 .portal-panel h2,
 .ops-panel h2 {
-  font-size: 34px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
 }
 .portal-panel__header p {
   color: #b6c9ba;
@@ -290,7 +298,7 @@ h3 {
   gap: 8px;
 }
 .portal-action > span {
-  font-size: 17px;
+  font-size: 16px;
   letter-spacing: 0.01em;
 }
 .portal-action small {
@@ -421,7 +429,7 @@ h3 {
 .registry-table {
   border-collapse: separate;
   border-spacing: 0 10px;
-  font-size: 17px;
+  font-size: 15px;
 }
 .registry-table th {
   font-size: 14px;
@@ -451,7 +459,7 @@ h3 {
   color: #bec7af;
 }
 .registry-table .text-button {
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 500;
 }
 .registry-seal {
@@ -510,7 +518,7 @@ h3 {
 @media (max-width: 650px) {
   .portal-panel h2,
   .ops-panel h2 {
-    font-size: 29px;
+    font-size: 16px;
   }
   .portal-panel__header,
   .ops-panel__header {
@@ -526,7 +534,7 @@ h3 {
     font-size: 16px;
   }
   .hud__brand-main {
-    font-size: 28px;
+    font-size: 20px;
   }
   .hud__stat {
     min-width: 0;

@@ -5,7 +5,9 @@ interface Props {
   direction: 'up' | 'down' | 'left' | 'right'
   moving: boolean
 }
-const rows = { down: '0%', left: '33.333333%', right: '66.666667%', up: '100%' }
+// Calibrated to this atlas's boot baselines at an 86px frame size. Generated
+// rows are not perfectly uniform; these offsets keep the feet on the ground.
+const rows = { down: '-10px', left: '-93px', right: '-176px', up: '-257px' }
 export function Character({ x, y, direction, moving }: Props) {
   return (
     <div
@@ -16,6 +18,7 @@ export function Character({ x, y, direction, moving }: Props) {
           top: y,
           zIndex: Math.round(y),
           '--sprite-y': rows[direction],
+          '--sprite-step-y': direction === 'up' ? '-259px' : rows[direction],
         } as CSSProperties
       }
       data-x={Math.round(x)}
