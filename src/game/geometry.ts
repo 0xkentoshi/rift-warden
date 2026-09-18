@@ -3,8 +3,11 @@ import {
   PLAYER_RADIUS,
   portalPositions,
   SCENE,
+  walkableZones,
   type Point,
   type Rect,
+  type WalkableZone,
+  type PortalPlacement,
 } from '../data/labLayout'
 
 export function viewportTransform(width: number, height: number) {
@@ -28,7 +31,36 @@ export function screenToScene(
     y: (point.y - transform.y) / transform.scale,
   }
 }
-export function isBlocked(point: Point, obstacles: readonly Rect[] = colliders): boolean {
+export function inWalkableZone(point: Point, zone: WalkableZone): boolean {
+  if (zone.type === 'ellipse')
+    return (
+      ((point.x - zone.center.x) / (zone.radius.x - PLAYER_RADIUS)) ** 2 +
+        ((point.y - zone.center.y) / (zone.radius.y - PLAYER_RADIUS)) ** 2 <=
+      1
+    )
+  const dx = zone.to.x - zone.from.x,
+    dy = zone.to.y - zone.from.y
+  const t = Math.max(
+    0,
+    Math.min(
+      1,
+      ((point.x - zone.from.x) * dx + (point.y - zone.from.y) * dy) / (dx * dx + dy * dy),
+    ),
+  )
+  return (
+    Math.hypot(point.x - zone.from.x - t * dx, point.y - zone.from.y - t * dy) <=
+    zone.width / 2 - PLAYER_RADIUS
+  )
+}
+export function isWalkable(point: Point): boolean {
+  return walkableZones.some((zone) => inWalkableZone(point, zone))
+}
+export function isBlocked(
+  point: Point,
+  obstacles: readonly Rect[] = colliders,
+  constrainToPaths = obstacles === colliders,
+): boolean {
+  if (constrainToPaths && !isWalkable(point)) return true
   if (
     point.x < PLAYER_RADIUS ||
     point.y < PLAYER_RADIUS ||
@@ -37,6 +69,16 @@ export function isBlocked(point: Point, obstacles: readonly Rect[] = colliders):
   )
     return true
   return obstacles.some((rect) => {
+    if (
+      constrainToPaths &&
+      walkableZones.some(
+        (zone) =>
+          zone.type === 'path' &&
+          zone.portalId === rect.id &&
+          inWalkableZone(point, zone),
+      )
+    )
+      return false
     const x = Math.max(rect.x, Math.min(point.x, rect.x + rect.width))
     const y = Math.max(rect.y, Math.min(point.y, rect.y + rect.height))
     return Math.hypot(point.x - x, point.y - y) <= PLAYER_RADIUS
@@ -46,22 +88,27 @@ export function moveWithCollisions(
   position: Point,
   delta: Point,
   obstacles: readonly Rect[] = colliders,
+  constrainToPaths = obstacles === colliders,
 ): Point {
   let next = { ...position }
   const steps = Math.max(1, Math.ceil(Math.hypot(delta.x, delta.y) / (PLAYER_RADIUS / 2)))
   for (let i = 0; i < steps; i++) {
     const x = { x: next.x + delta.x / steps, y: next.y }
-    if (!isBlocked(x, obstacles)) next = x
+    if (!isBlocked(x, obstacles, constrainToPaths)) next = x
     const y = { x: next.x, y: next.y + delta.y / steps }
-    if (!isBlocked(y, obstacles)) next = y
+    if (!isBlocked(y, obstacles, constrainToPaths)) next = y
   }
   return next
 }
-export function nearestPortal(position: Point, ids: readonly string[]): string | null {
+export function nearestPortal(
+  position: Point,
+  ids: readonly string[],
+  placements: Record<string, PortalPlacement> = portalPositions,
+): string | null {
   let nearest: string | null = null
   let distance = Infinity
   for (const id of ids) {
-    const placement = portalPositions[id]
+    const placement = placements[id]
     if (!placement) continue
     const d = Math.hypot(
       position.x - placement.approach.x,

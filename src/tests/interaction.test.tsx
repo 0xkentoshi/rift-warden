@@ -40,6 +40,7 @@ it.each(Object.keys(portalPositions))('E inspects %s at its reachable approach',
   fireEvent.keyDown(window, { code: 'KeyE', key: 'у' })
   expect(select).toHaveBeenCalledExactlyOnceWith(id)
   fireEvent.keyDown(window, { code: 'KeyE', repeat: true })
+  fireEvent.keyDown(window, { code: 'KeyE', repeat: false })
   expect(select).toHaveBeenCalledTimes(1)
 })
 it('ignores E far away and while a panel is open; portal click remains available', () => {
@@ -57,6 +58,7 @@ it('ignores E far away and while a panel is open; portal click remains available
   )
   fireEvent.keyDown(window, { code: 'KeyE' })
   expect(select).not.toHaveBeenCalled()
+  expect(document.querySelectorAll('.portal-label')).toHaveLength(0)
   fireEvent.click(screen.getByRole('button', { name: 'INSPECT Mossbound Door' }))
   expect(select).toHaveBeenCalledExactlyOnceWith('mossbound-door')
   state.position = portalPositions['mossbound-door'].approach
@@ -72,4 +74,26 @@ it('ignores E far away and while a panel is open; portal click remains available
   )
   fireEvent.keyDown(window, { code: 'KeyE' })
   expect(select).toHaveBeenCalledTimes(1)
+})
+it('shows only the nearby portal details and ignores interaction typed in an input', () => {
+  state.position = portalPositions['void-passage'].approach
+  const select = vi.fn()
+  render(
+    <Laboratory
+      portals={initialPortals}
+      interactionLocked={false}
+      language="en"
+      onSelectPortal={select}
+    >
+      <input aria-label="Test input" />
+    </Laboratory>,
+  )
+  const labels = document.querySelectorAll('.portal-label')
+  expect(labels).toHaveLength(1)
+  expect(labels[0].textContent).toContain('Void Passage')
+  expect(labels[0].textContent).toContain('CREATURES: 7')
+  fireEvent.keyDown(screen.getByRole('textbox'), { code: 'KeyE' })
+  expect(select).not.toHaveBeenCalled()
+  fireEvent.keyDown(window, { code: 'KeyE', ctrlKey: true })
+  expect(select).not.toHaveBeenCalled()
 })

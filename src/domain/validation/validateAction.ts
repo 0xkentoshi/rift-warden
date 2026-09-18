@@ -1,11 +1,7 @@
 import { calculateRisk } from '../risk/calculateRisk'
 import type { Portal } from '../../types/portal'
 
-export type PortalAction =
-  | 'stabilize'
-  | 'observe'
-  | 'mark-uncertain'
-  | 'close'
+export type PortalAction = 'stabilize' | 'observe' | 'mark-uncertain' | 'close'
 
 export type ActionReasonCode =
   | 'alreadyClosed'
@@ -13,6 +9,7 @@ export type ActionReasonCode =
   | 'alreadyStable'
   | 'alreadyUncertain'
   | 'creaturesInside'
+  | 'collapseExpired'
 
 export interface ActionValidation {
   allowed: boolean
@@ -20,10 +17,7 @@ export interface ActionValidation {
   reasonCode?: ActionReasonCode
 }
 
-export function validateAction(
-  portal: Portal,
-  action: PortalAction,
-): ActionValidation {
+export function validateAction(portal: Portal, action: PortalAction): ActionValidation {
   if (portal.status === 'closed') {
     return {
       allowed: false,
@@ -33,6 +27,9 @@ export function validateAction(
   }
 
   const risk = calculateRisk(portal)
+  if (portal.collapseMinutes <= 0 && action !== 'close') {
+    return { allowed: false, requiresConfirmation: false, reasonCode: 'collapseExpired' }
+  }
 
   if (action === 'observe' && risk.level === 'CRITICAL') {
     return {

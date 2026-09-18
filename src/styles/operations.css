@@ -5,8 +5,7 @@
   display: grid;
   place-items: center;
   padding: 18px;
-  background: rgba(10, 7, 10, 0.78);
-  backdrop-filter: blur(5px);
+  background: rgba(6, 12, 15, 0.64);
 }
 
 .portal-panel,
@@ -14,9 +13,14 @@
   width: min(1060px, 100%);
   max-height: 92vh;
   overflow-y: auto;
-  background: linear-gradient(180deg, rgba(48, 34, 46, 0.99), rgba(25, 19, 26, 0.99));
-  border: 1px solid #886a67;
-  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.58);
+  background:
+    repeating-linear-gradient(0deg, #ffffff02 0 1px, transparent 1px 4px), #121e22;
+  border: 3px solid #8f794f;
+  box-shadow:
+    0 0 0 2px #080f14,
+    0 0 0 4px #d7b77740,
+    7px 7px 0 #060b12b0,
+    inset 0 0 0 2px #d0ba791c;
 }
 
 .portal-panel__header,
@@ -26,7 +30,7 @@
   justify-content: space-between;
   gap: 14px;
   padding: 16px 18px;
-  background: linear-gradient(180deg, rgba(83, 59, 75, 0.99), rgba(58, 41, 54, 0.99));
+  background: linear-gradient(180deg, #2d3e3b, #1b2b2b);
   border-bottom: 1px solid var(--line-soft);
 }
 
@@ -86,7 +90,7 @@
 .portal-panel__message,
 .confirmation-box,
 .settings-card {
-  background: linear-gradient(180deg, rgba(43, 31, 40, 0.97), rgba(30, 23, 30, 0.97));
+  background: #0c171b91;
   border: 1px solid var(--line-soft);
 }
 
@@ -121,7 +125,8 @@
 .metric__bar span {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, #8bd8d3, #b6df9f);
+  background: repeating-linear-gradient(90deg, #91dec1 0 7px, #406252 7px 9px);
+  transition: width 650ms steps(12);
 }
 
 .risk-console {
@@ -179,7 +184,8 @@
 .risk-console__bar span {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, var(--risk-color), #ffe8bd);
+  background: repeating-linear-gradient(90deg, var(--risk-color) 0 7px, #101b1e 7px 9px);
+  transition: width 650ms steps(12);
 }
 .risk-console__factors {
   display: grid;
@@ -443,7 +449,7 @@
 .portal-panel,
 .ops-panel {
   width: min(930px, 100%);
-  border-radius: 8px;
+  border-radius: 0;
   font-size: 14px;
   line-height: 1.5;
 }
@@ -464,8 +470,9 @@
 .portal-panel h2,
 .ops-panel h2 {
   font:
-    600 28px 'Segoe UI',
-    sans-serif;
+    900 27px 'Courier New',
+    monospace;
+  text-shadow: 2px 2px #090f13;
 }
 h3 {
   margin: 0 0 8px;
@@ -482,9 +489,13 @@ p {
 .portal-action,
 .ops-panel__close,
 .portal-panel__close {
-  border: 1px solid #87747b80;
-  border-radius: 4px;
-  background: linear-gradient(#493646, #29212c);
+  border: 2px solid #8d79517a;
+  border-radius: 0;
+  background: linear-gradient(#31423b, #1f302f);
+  box-shadow:
+    inset 2px 2px #e5d5a51a,
+    inset -2px -2px #0005,
+    2px 2px #080f15;
   color: #f6ebdb;
 }
 .ops-button,
@@ -496,6 +507,149 @@ button:hover {
 }
 .portal-action:hover {
   border-color: #d5ba8a;
+}
+.portal-action:active,
+.ops-button:active,
+.confirmation-box button:active {
+  transform: translate(1px, 2px);
+  box-shadow: inset 2px 2px #0005;
+}
+.portal-action[aria-busy='true'] {
+  border-color: #c9b071;
+  animation: action-busy 700ms steps(4);
+}
+.portal-action:disabled {
+  opacity: 0.65;
+}
+.panel-tools {
+  display: flex;
+  gap: 9px;
+}
+.panel-language {
+  width: 40px;
+  background: #152b2b;
+  border: 2px solid #8d79517a;
+  font:
+    bold 12px 'Courier New',
+    monospace;
+}
+.action-preview {
+  border: 2px solid #b99e61;
+  box-shadow: inset 0 0 0 3px #e9c77213;
+  background: #20322c;
+  scroll-margin-top: 120px;
+}
+.preview-grid {
+  margin: 5px 0;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+.preview-grid > div {
+  background: #07121566;
+  padding: 9px;
+  border: 1px solid #8d795140;
+}
+.preview-grid dt {
+  color: #b7c7bf;
+  font-size: 10px;
+  margin-bottom: 5px;
+}
+.preview-grid dd {
+  margin: 0;
+  font:
+    bold 12px 'Courier New',
+    monospace;
+}
+.preview-grid b {
+  color: #b8f5ce;
+}
+.preview-warning {
+  color: #ffd59e !important;
+  border-left: 3px solid #dca86a;
+  padding-left: 10px;
+}
+.portal-backdrop {
+  background: #050c1129;
+}
+.portal-backdrop .portal-panel {
+  width: min(610px, 100%);
+  margin-left: auto;
+  margin-right: 12px;
+}
+.event-new {
+  animation: event-highlight 3s steps(5);
+}
+.world-toast {
+  position: fixed;
+  bottom: 54px;
+  left: 24px;
+  z-index: 5100;
+  max-width: min(340px, 85vw);
+  padding: 12px 16px;
+  border: 2px solid #89ba9d;
+  background: #122824f5;
+  box-shadow: 3px 3px #060e12;
+  display: grid;
+  gap: 5px;
+  pointer-events: none;
+  animation: toast-lifetime 4.5s forwards;
+}
+.world-toast strong {
+  color: #b8f5cf;
+  font:
+    bold 14px 'Courier New',
+    monospace;
+}
+.world-toast span {
+  font-size: 11px;
+}
+.world-toast small {
+  font-size: 10px;
+  color: #b1c6bc;
+}
+.world-toast--rejected {
+  border-color: #ca8580;
+  background: #342523f5;
+}
+@keyframes toast-lifetime {
+  0%,
+  85% {
+    opacity: 1;
+    visibility: visible;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+@keyframes event-highlight {
+  from {
+    background: #c8ef8f29;
+  }
+  to {
+    background: transparent;
+  }
+}
+@keyframes action-busy {
+  50% {
+    border-color: #c0ebc1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .world-toast {
+    animation: toast-lifetime 4.5s steps(1) forwards !important;
+  }
+}
+@media (max-width: 760px) {
+  .portal-backdrop .portal-panel {
+    margin: 0;
+    width: 100%;
+  }
+  .world-toast {
+    left: 10px;
+    bottom: 8px;
+  }
 }
 .portal-action small {
   font-size: 11px;

@@ -31,6 +31,12 @@ const stages = [
     'Запустил тесты, lint, production build; проверил интерфейс в браузере и подготовил README/QA.',
     'Проверить пустой список, запрет действий, стабилизацию, журнал, движение и все шесть подходов.',
   ],
+  [
+    'Gameplay polish v3',
+    'Уточнил ориентацию нижних порталов, потребовал доступные ступени, принял финальный фон и запретил менять его геометрию.',
+    'Зафиксировал SHA-256 ассета; расширил карту движения до ступеней, добавил предпросмотр, защиту повторных действий, подтверждение сброса, VFX и индикаторы существ. Проверил транзакции и UI.',
+    'Фон финальный. Дальше только walkable map, collision, proximity, персонаж, VFX, существа, огонь и UI поверх него.',
+  ],
 ]
 const stagesEn = [
   [
@@ -62,6 +68,12 @@ const stagesEn = [
     'Reported issues in earlier versions; requested that their time not be counted.',
     'Ran tests, lint and build; checked the UI in the browser; prepared README and QA notes.',
     'Verify empty state, blocked actions, stabilization, history, movement and all six approaches.',
+  ],
+  [
+    'Gameplay polish v3',
+    'Specified lower portal orientation and traversable stairs, approved the final background and locked its geometry.',
+    'Recorded its SHA-256; extended navigation onto stairs, added previews, repeat-action guards, reset confirmation, VFX and creature indicators. Tested transactions and UI.',
+    'The background is final. Continue with walkable routes, collision, proximity, character, VFX, creatures, fire and UI over it.',
   ],
 ]
 export function AIWorklog({
@@ -136,12 +148,14 @@ export function AIWorklog({
               'Уютный pixel art и конкретный утверждённый референс.',
               'Сохранение расчёта риска и бизнес-правил при переделке сцены.',
               'Приоритет полного соответствия ТЗ над декоративными эффектами.',
+              'Фиксация принятого фона: дальнейшие изменения только в интерактивных слоях.',
             ]
           : [
               'A spatial laboratory as the initial view.',
               'Cozy pixel art and the specific approved reference.',
               'Preserve risk and business rules during scene rework.',
               'Prioritize complete assignment coverage over decorative effects.',
+              'Lock the approved background; continue only with interactive layers.',
             ]
         ).map((v) => (
           <li key={v}>{v}</li>
@@ -152,6 +166,11 @@ export function AIWorklog({
         {ru
           ? 'В прошлых версиях AI растягивал фон, оставлял впечатываемые подписи и овал, смешивал проценты и CSS-координаты. Автор заметил проблемы. В этой доработке AI убрал эти решения: чистый фон, единый viewport, отдельные коллизии и тесты доступности подходов. При первом редактировании патч был отклонён инструментом из-за двух операций над одним файлом; запись исправлена, исходные данные не потеряны.'
           : 'Earlier AI iterations stretched the scene, retained baked labels and an oval, and mixed coordinate systems. The author reported these issues. This rework replaces them with a clean background, one viewport, explicit colliders and reachability tests. An initial patch was rejected for duplicate file operations; the write was corrected without losing source data.'}
+      </p>
+      <p>
+        {ru
+          ? 'В v3 ImageGen несколько раз сместил нижние порталы вместо разворота, оставил двойные контуры или сделал чёрную арку лежащей. Автор отклонил эти варианты и уточнил геометрические критерии. Принятый результат зафиксирован без дальнейшей генерации. При проверке кода обнаружен неподдерживаемый параметр exact в двух тестовых запросах Testing Library; исправлен перед production-сборкой.'
+          : 'In v3, ImageGen repeatedly shifted portals instead of rotating their perspective, left doubled outlines or made the black arch horizontal. The author rejected these results and refined the geometric criteria. The approved asset was locked. Type checking also caught an unsupported exact option in two Testing Library queries; it was fixed before the production build.'}
       </p>
       <h3>{ru ? 'Что сделано вручную' : 'Manual contributions'}</h3>
       <p>

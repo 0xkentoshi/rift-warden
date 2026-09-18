@@ -12,6 +12,7 @@ interface Props {
   onToggleMusic: () => void
   onOpenRegistry: () => void
   onOpenWorklog: () => void
+  latestEventId?: string
 }
 export function Hud(p: Props) {
   const report = calculateLabReport(p.portals, [])
@@ -31,7 +32,9 @@ export function Hud(p: Props) {
           {(['open', 'critical', 'attention', 'closed'] as const).map((key) => (
             <div className={'hud__stat hud__stat--' + key} key={key}>
               <span>{t(p.language, key)}</span>
-              <strong>{report[key]}</strong>
+              <strong className="counter-value" key={report[key]}>
+                {report[key]}
+              </strong>
             </div>
           ))}
         </div>
@@ -41,7 +44,12 @@ export function Hud(p: Props) {
             p.language === 'ru' ? 'Инструменты лаборатории' : 'Laboratory tools'
           }
         >
-          <button onClick={p.onOpenEventLog}>{t(p.language, 'eventLog')}</button>
+          <button onClick={p.onOpenEventLog}>
+            {t(p.language, 'eventLog')}
+            {p.latestEventId && (
+              <i className="journal-ping" key={p.latestEventId} aria-hidden="true" />
+            )}
+          </button>
           <button onClick={p.onOpenSystem}>{t(p.language, 'system')}</button>
           <div className="hud__languages">
             {(['en', 'ru'] as const).map((lang) => (

@@ -11,12 +11,12 @@ import { EventLogPanel } from './components/ui/EventLogPanel'
 import { SettingsPanel } from './components/ui/SettingsPanel'
 import { SystemReportPanel } from './components/ui/SystemReportPanel'
 import { initialPortals } from './data/portals'
-import { applyAction } from './domain/actions/applyAction'
-import { createAuditEvent } from './domain/events/createAuditEvent'
+import { performAction, type ActionResult } from './domain/actions/applyAction'
 import { calculateLabReport } from './domain/report/calculateLabReport'
-import { calculateRisk } from './domain/risk/calculateRisk'
-import type { ActionReasonCode, PortalAction } from './domain/validation/validateAction'
-import { type Language } from './i18n/translations'
+import type { PortalAction } from './domain/validation/validateAction'
+import { actionLabel, riskLevelLabel, type Language } from './i18n/translations'
+import { getRiskLevel } from './domain/risk/calculateRisk'
+import { Modal } from './components/ui/Modal'
 import {
   clearLabState,
   loadLabState,
@@ -65,6 +65,11 @@ function App() {
   const [activePanel, setActivePanel] = useState<ActivePanel>(null)
   const [volume, setVolume] = useState(getInitialVolume)
   const [musicEnabled, setMusicEnabled] = useState(getInitialMusicEnabled)
+  const [lastAction, setLastAction] = useState<AuditEvent | null>(null)
+  const [resetRequested, setResetRequested] = useState(false)
+  const [sceneEpoch, setSceneEpoch] = useState(0)
+  const actionLock = useRef(0)
+  const portalSnapshot = useRef(initialState.portals)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const storageIssue = useSyncExternalStore(subscribeStorageIssue, getStorageIssue)
 
@@ -122,10 +127,14 @@ function App() {
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') {
+      if (event.key !== 'Escape' || event.defaultPrevented) {
         return
       }
 
+      if (resetRequested) {
+        setResetRequested(false)
+        return
+      }
       setSelectedPortalId(null)
       setActivePanel(null)
     }
@@ -135,70 +144,51 @@ function App() {
     return () => {
       window.removeEventListener('keydown', handleEscape)
     }
-  }, [])
+  }, [resetRequested])
 
   const openPortal = (portalId: string) => {
+    if (resetRequested) return
     setActivePanel(null)
     setSelectedPortalId(portalId)
   }
 
   const openPanel = (panel: Exclude<ActivePanel, null>) => {
+    if (resetRequested) return
     setSelectedPortalId(null)
     setActivePanel(panel)
   }
 
-  const handleAction = (action: PortalAction) => {
-    if (!selectedPortal) {
-      return
-    }
-
-    const beforeRisk = calculateRisk(selectedPortal).score
-    const updatedPortal =
-      action === 'observe' ? selectedPortal : applyAction(selectedPortal, action)
-    const afterRisk = calculateRisk(updatedPortal).score
-
-    if (action !== 'observe') {
-      setPortals((current) =>
-        current.map((portal) =>
-          portal.id === selectedPortal.id ? updatedPortal : portal,
-        ),
-      )
-    }
-
-    setEvents((current) => [
-      ...current,
-      createAuditEvent(selectedPortal, action, beforeRisk, afterRisk, {
-        creatureCount: selectedPortal.creatures,
-      }),
-    ])
-  }
-
-  const handleRejectedAction = (action: PortalAction, reasonCode: ActionReasonCode) => {
-    if (!selectedPortal) {
-      return
-    }
-
-    const risk = calculateRisk(selectedPortal).score
-
-    setEvents((current) => [
-      ...current,
-      createAuditEvent(selectedPortal, action, risk, risk, {
-        status: 'rejected',
-        reasonCode,
-        creatureCount: selectedPortal.creatures,
-      }),
-    ])
+  const handleAction = (action: PortalAction, confirmed = false): ActionResult => {
+    const current = portalSnapshot.current.find((p) => p.id === selectedPortalId)
+    if (!current || performance.now() < actionLock.current) return { kind: 'busy' }
+    const result = performAction(current, action, confirmed)
+    if (!('event' in result)) return result
+    actionLock.current = performance.now() + 700
+    portalSnapshot.current = portalSnapshot.current.map((p) =>
+      p.id === current.id ? result.portal : p,
+    )
+    setPortals(portalSnapshot.current)
+    setEvents((history) => [...history, result.event])
+    setLastAction(result.event)
+    return result
   }
 
   const restoreDemo = () => {
+    portalSnapshot.current = initialPortals.map((p) => ({ ...p }))
     setPortals(initialPortals)
     setEvents([])
     setSelectedPortalId(null)
     setActivePanel(null)
+    setResetRequested(false)
+    setLastAction(null)
+    actionLock.current = 0
+    setSceneEpoch((epoch) => epoch + 1)
   }
 
   const loadEmptyScenario = () => {
+    portalSnapshot.current = []
     setPortals([])
+    setLastAction(null)
     setSelectedPortalId(null)
     setActivePanel(null)
   }
@@ -209,7 +199,7 @@ function App() {
   }
 
   const interactionLocked = selectedPortal !== null || activePanel !== null
-  useModalFocus(selectedPortalId ?? activePanel)
+  useModalFocus(resetRequested ? 'reset-confirmation' : (selectedPortalId ?? activePanel))
 
   return (
     <div className="app-shell">
@@ -237,7 +227,9 @@ function App() {
       )}
 
       <Laboratory
+        key={sceneEpoch}
         portals={portals}
+        lastAction={lastAction}
         interactionLocked={interactionLocked}
         language={language}
         onSelectPortal={openPortal}
@@ -253,6 +245,7 @@ function App() {
           onToggleMusic={() => setMusicEnabled((value) => !value)}
           onOpenRegistry={() => openPanel('registry')}
           onOpenWorklog={() => openPanel('worklog')}
+          latestEventId={lastAction?.id}
         />
       </Laboratory>
 
@@ -264,20 +257,21 @@ function App() {
           language={language}
           onClose={() => setSelectedPortalId(null)}
           onAction={handleAction}
-          onRejectedAction={handleRejectedAction}
+          onLanguageChange={setLanguage}
         />
       )}
 
       {activePanel === 'event-log' && (
         <EventLogPanel
           events={events}
+          latestEventId={lastAction?.id}
           language={language}
           onClose={() => setActivePanel(null)}
           onClear={() => setEvents([])}
         />
       )}
 
-      {activePanel === 'system' && (
+      {activePanel === 'system' && !resetRequested && (
         <SystemReportPanel
           report={report}
           portals={portals}
@@ -285,18 +279,18 @@ function App() {
           language={language}
           onClose={() => setActivePanel(null)}
           onLoadEmptyScenario={loadEmptyScenario}
-          onRestoreDemo={restoreDemo}
+          onRestoreDemo={() => setResetRequested(true)}
         />
       )}
 
-      {activePanel === 'settings' && (
+      {activePanel === 'settings' && !resetRequested && (
         <SettingsPanel
           language={language}
           musicEnabled={musicEnabled}
           volume={volume}
           onMusicEnabledChange={setMusicEnabled}
           onVolumeChange={setVolume}
-          onReset={resetLaboratory}
+          onReset={() => setResetRequested(true)}
           onClose={() => setActivePanel(null)}
         />
       )}
@@ -310,6 +304,53 @@ function App() {
       )}
       {activePanel === 'worklog' && (
         <AIWorklog language={language} onClose={() => setActivePanel(null)} />
+      )}
+      {resetRequested && (
+        <Modal
+          title={
+            language === 'ru' ? 'Восстановить лабораторию?' : 'Restore the laboratory?'
+          }
+          eyebrow="RIFT // WARDEN"
+          language={language}
+          onClose={() => setResetRequested(false)}
+        >
+          <p>
+            {language === 'ru'
+              ? 'Порталы вернутся в исходное состояние. Журнал очистится, смотритель вернётся в центр. Язык и звук сохранятся.'
+              : 'Portals return to their initial state, the journal clears and the warden returns to the center. Language and sound preferences remain.'}
+          </p>
+          <div className="confirmation-box">
+            <button onClick={() => setResetRequested(false)}>
+              {language === 'ru' ? 'ОТМЕНА' : 'CANCEL'}
+            </button>
+            <button onClick={resetLaboratory}>
+              {language === 'ru' ? 'ВОССТАНОВИТЬ' : 'RESTORE'}
+            </button>
+          </div>
+        </Modal>
+      )}
+      {lastAction && (
+        <div
+          key={lastAction.id}
+          className={'world-toast world-toast--' + lastAction.status}
+          role="status"
+        >
+          <strong>
+            {lastAction.status === 'success' ? '✦ ' : '! '}
+            {lastAction.portalName}
+          </strong>
+          <span>
+            {actionLabel(language, lastAction.action)} · {lastAction.beforeRisk}{' '}
+            {riskLevelLabel(language, getRiskLevel(lastAction.beforeRisk))} →{' '}
+            {lastAction.afterRisk}{' '}
+            {riskLevelLabel(language, getRiskLevel(lastAction.afterRisk))}
+          </span>
+          <small>
+            {language === 'ru'
+              ? 'Событие записано в журнал'
+              : 'Event recorded in the journal'}
+          </small>
+        </div>
       )}
     </div>
   )

@@ -26,24 +26,32 @@ export function PortalEntity({ portal, nearby, language, onOpen }: Props) {
         aria-label={t(language, 'inspect') + ' ' + portal.name}
         onClick={onOpen}
       />
-      <button
-        className={
-          'portal-label risk-' +
-          risk.level.toLowerCase() +
-          (portal.status === 'closed' ? ' is-closed' : '') +
-          (nearby ? ' is-nearby' : '')
-        }
-        style={{ left: p.label.x, top: p.label.y }}
-        onClick={onOpen}
-      >
-        <strong>{portal.name}</strong>
-        <small>{portal.destination}</small>
-        <span>
-          {portal.status === 'closed'
-            ? t(language, 'offline')
-            : riskLevelLabel(language, risk.level) + ' · ' + risk.score}
-        </span>
-      </button>
+      {nearby && (
+        <button
+          className={
+            'portal-label risk-' +
+            risk.level.toLowerCase() +
+            (portal.status === 'closed' ? ' is-closed' : '') +
+            (nearby ? ' is-nearby' : '')
+          }
+          style={{ left: p.label.x, top: p.label.y }}
+          onClick={onOpen}
+        >
+          <strong>{portal.name}</strong>
+          <small>
+            {t(language, 'stability')}: {portal.stability}% · {t(language, 'creatures')}:{' '}
+            {portal.creatures}
+          </small>
+          <span>
+            {portal.status === 'closed'
+              ? t(language, 'offline')
+              : riskLevelLabel(language, risk.level) + ' · ' + risk.score}
+          </span>
+          <small>
+            <kbd>E</kbd> {t(language, 'inspect')}
+          </small>
+        </button>
+      )}
     </>
   )
 }

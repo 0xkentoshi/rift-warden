@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { colliders, portalPositions, SCENE } from '../../data/labLayout'
+import { colliders, portalPositions, SCENE, walkableZones } from '../../data/labLayout'
 import { isInteractionCode } from '../../domain/input/keyboard'
 import { nearestPortal, viewportTransform } from '../../game/geometry'
 import { useKeyboardMovement } from '../../hooks/useKeyboardMovement'
@@ -9,6 +9,8 @@ import type { Portal } from '../../types/portal'
 import { Character } from './Character'
 import { PortalEntity } from './PortalEntity'
 import { SceneEffects } from './SceneEffects'
+import type { AuditEvent } from '../../types/audit'
+import { readPreference, writePreference } from '../../storage/labStorage'
 
 interface Props {
   portals: Portal[]
@@ -16,6 +18,7 @@ interface Props {
   language: Language
   onSelectPortal: (id: string) => void
   children: ReactNode
+  lastAction?: AuditEvent | null
 }
 export function Laboratory({
   portals,
@@ -23,7 +26,19 @@ export function Laboratory({
   language,
   onSelectPortal,
   children,
+  lastAction = null,
 }: Props) {
+  const [showHint, setShowHint] = useState(
+    () => readPreference('rift-warden-controls-seen') !== 'yes',
+  )
+  const interactionLatch = useRef(0)
+  const inspect = (id: string) => {
+    if (interactionLocked || performance.now() < interactionLatch.current) return
+    interactionLatch.current = performance.now() + 300
+    setShowHint(false)
+    writePreference('rift-warden-controls-seen', 'yes')
+    onSelectPortal(id)
+  }
   const viewport = useRef<HTMLDivElement>(null)
   const [transform, setTransform] = useState(() =>
     viewportTransform(window.innerWidth, window.innerHeight),
@@ -45,19 +60,28 @@ export function Laboratory({
   }, [])
   useEffect(() => {
     const interact = (event: KeyboardEvent) => {
-      if (!isInteractionCode(event.code) || event.repeat || interactionLocked || !nearby)
+      if (
+        !isInteractionCode(event.code) ||
+        event.repeat ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey ||
+        interactionLocked ||
+        !nearby
+      )
         return
       if (
         event.target instanceof HTMLElement &&
-        event.target.matches('input, textarea, select')
+        (event.target.matches('input, textarea, select') ||
+          event.target.isContentEditable)
       )
         return
       event.preventDefault()
-      onSelectPortal(nearby)
+      inspect(nearby)
     }
     window.addEventListener('keydown', interact)
     return () => window.removeEventListener('keydown', interact)
-  }, [nearby, interactionLocked, onSelectPortal])
+  })
   return (
     <main
       className="laboratory"
@@ -80,14 +104,15 @@ export function Laboratory({
             ')',
         }}
       >
-        <SceneEffects portals={portals} />
+        <SceneEffects portals={portals} nearby={nearby} lastAction={lastAction} />
+        <div className="silent-arch-occlusion" aria-hidden="true" />
         {portals.map((portal) => (
           <PortalEntity
             key={portal.id}
             portal={portal}
             nearby={nearby === portal.id}
             language={language}
-            onOpen={() => onSelectPortal(portal.id)}
+            onOpen={() => inspect(portal.id)}
           />
         ))}
         <Character
@@ -103,6 +128,28 @@ export function Laboratory({
             height={SCENE.height}
             aria-hidden="true"
           >
+            {walkableZones.map((zone) =>
+              zone.type === 'ellipse' ? (
+                <ellipse
+                  className="walkable-debug"
+                  key={zone.id}
+                  cx={zone.center.x}
+                  cy={zone.center.y}
+                  rx={zone.radius.x}
+                  ry={zone.radius.y}
+                />
+              ) : (
+                <line
+                  className="walkable-debug"
+                  key={zone.id}
+                  x1={zone.from.x}
+                  y1={zone.from.y}
+                  x2={zone.to.x}
+                  y2={zone.to.y}
+                  strokeWidth={zone.width}
+                />
+              ),
+            )}
             {colliders.map((c) => (
               <rect key={c.id} x={c.x} y={c.y} width={c.width} height={c.height} />
             ))}
@@ -124,6 +171,29 @@ export function Laboratory({
         )}
       </div>
       {children}
+      {showHint && portals.length > 0 && (
+        <aside className="first-hint">
+          <span className="first-hint__icon">✦</span>
+          <div>
+            <strong>
+              {language === 'ru' ? 'ТВОЯ СМЕНА НАЧАЛАСЬ' : 'YOUR WATCH BEGINS'}
+            </strong>
+            <p>
+              {language === 'ru'
+                ? '6 порталов. Начни с красного: усмири опасный разлом.'
+                : '6 portals. Start with the red one: calm the dangerous rift.'}
+            </p>
+            <small>
+              <kbd>WASD / ↑↓←→</kbd> {t(language, 'move')} · <kbd>E</kbd>{' '}
+              {t(language, 'inspect')}
+              <br />
+              {language === 'ru'
+                ? 'Или нажми на арку / открой реестр.'
+                : 'Or click an arch / open the registry.'}
+            </small>
+          </div>
+        </aside>
+      )}
       <section
         className="mobile-portals"
         aria-label={
@@ -139,7 +209,7 @@ export function Laboratory({
           {portals.map((portal) => {
             const risk = calculateRisk(portal)
             return (
-              <button key={portal.id} onClick={() => onSelectPortal(portal.id)}>
+              <button key={portal.id} onClick={() => inspect(portal.id)}>
                 <strong>{portal.name}</strong>
                 <small>{portal.destination}</small>
                 <span className={'risk-text risk-text--' + risk.level.toLowerCase()}>
@@ -167,7 +237,7 @@ export function Laboratory({
             : 'LABORATORY 06 · WARDEN ON DUTY'}
         </span>
         {nearby && !interactionLocked ? (
-          <button className="interaction-prompt" onClick={() => onSelectPortal(nearby)}>
+          <button className="interaction-prompt" onClick={() => inspect(nearby)}>
             <kbd>E</kbd>
             {t(language, 'inspect')} {portals.find((p) => p.id === nearby)?.name}
           </button>

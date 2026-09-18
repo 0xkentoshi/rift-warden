@@ -1,13 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { calculateRisk } from '../../domain/risk/calculateRisk'
-import {
-  validateAction,
-  type ActionReasonCode,
-  type PortalAction,
-} from '../../domain/validation/validateAction'
+import { validateAction, type PortalAction } from '../../domain/validation/validateAction'
 import {
   actionLabel,
+  acknowledgedWarning,
   actionReason,
   riskFactorLabel,
   riskLevelLabel,
@@ -17,14 +14,16 @@ import {
 import type { Portal } from '../../types/portal'
 import type { AuditEvent } from '../../types/audit'
 import { recommendAction } from '../../domain/report/recommendation'
+import { applyAction, type ActionResult } from '../../domain/actions/applyAction'
+import { AnimatedRisk } from './AnimatedRisk'
 
 interface PortalControlPanelProps {
   portal: Portal
   events: AuditEvent[]
   language: Language
   onClose: () => void
-  onAction: (action: PortalAction) => void
-  onRejectedAction: (action: PortalAction, reasonCode: ActionReasonCode) => void
+  onAction: (action: PortalAction, confirmed?: boolean) => ActionResult
+  onLanguageChange: (language: Language) => void
 }
 
 const ACTIONS: PortalAction[] = ['stabilize', 'observe', 'mark-uncertain', 'close']
@@ -35,11 +34,14 @@ export function PortalControlPanel({
   language,
   onClose,
   onAction,
-  onRejectedAction,
+  onLanguageChange,
 }: PortalControlPanelProps) {
   const risk = calculateRisk(portal)
   const ru = language === 'ru'
   const recommendations = {
+    close: ru
+      ? 'Окно до схлопывания истекло. Закройте разлом, учтя существ внутри. Это телеметрия, не таймер реального времени.'
+      : 'The collapse window has expired. Secure the rift by closing it, accounting for occupants. This is telemetry, not a live countdown.',
     closed: ru
       ? 'Портал закрыт. Дополнительные действия не нужны.'
       : 'Portal closed. No further action is needed.',
@@ -56,8 +58,32 @@ export function PortalControlPanel({
 
   const [pendingAction, setPendingAction] = useState<PortalAction | null>(null)
 
-  const [message, setMessage] = useState<string | null>(null)
-  const [messageKind, setMessageKind] = useState<'success' | 'rejected'>('success')
+  const [feedback, setFeedback] = useState<AuditEvent | 'error' | 'busy' | null>(null)
+  const [busy, setBusy] = useState<PortalAction | null>(null)
+  const executionLatch = useRef(false)
+  const unlockTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const previewSnapshot = useRef<Portal | null>(null)
+  const messageKind =
+    typeof feedback === 'object' && feedback?.status === 'success'
+      ? 'success'
+      : 'rejected'
+  const message =
+    feedback === 'error'
+      ? ru
+        ? 'Действие не выполнено. Попробуйте снова; если ошибка повторится, перезагрузите страницу.'
+        : 'The action could not be completed. Try again; reload if the problem persists.'
+      : feedback === 'busy'
+        ? ru
+          ? 'Дождитесь завершения текущего действия.'
+          : 'Wait for the current action to finish.'
+        : feedback
+          ? feedback.status === 'rejected' && feedback.reasonCode
+            ? actionReason(language, feedback.reasonCode, feedback.creatureCount)
+            : feedback.action === 'observe'
+              ? t(language, 'observerTelemetry')
+              : `${actionLabel(language, feedback.action)} · ${feedback.beforeRisk} → ${feedback.afterRisk}`
+          : null
+  useEffect(() => () => clearTimeout(unlockTimer.current), [])
   const feedbackRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (message || pendingAction)
@@ -73,75 +99,65 @@ export function PortalControlPanel({
     [portal],
   )
 
-  const showRejectedMessage = (action: PortalAction, reasonCode: ActionReasonCode) => {
-    setMessageKind('rejected')
-    setMessage(actionReason(language, reasonCode, portal.creatures))
-    onRejectedAction(action, reasonCode)
+  const execute = (action: PortalAction, confirmed = false) => {
+    if (executionLatch.current) return
+    executionLatch.current = true
+    setBusy(action)
+    setPendingAction(null)
+    try {
+      const result = onAction(action, confirmed)
+      if ('event' in result) setFeedback(result.event)
+      else if (result.kind === 'confirmation') setPendingAction(action)
+      else setFeedback('busy')
+    } catch (error) {
+      console.error('Portal action failed', error)
+      setFeedback('error')
+    }
+    unlockTimer.current = setTimeout(() => {
+      executionLatch.current = false
+      setBusy(null)
+    }, 700)
   }
-
   const handleAction = (action: PortalAction) => {
-    const validation = validations[action]
-
-    setMessage(null)
-    setPendingAction(null)
-
-    if (!validation.allowed) {
-      if (validation.reasonCode) {
-        showRejectedMessage(action, validation.reasonCode)
-      }
-
+    if (executionLatch.current) return
+    setFeedback(null)
+    if (!validations[action].allowed) {
+      execute(action)
       return
     }
-
-    if (validation.requiresConfirmation) {
-      setPendingAction(action)
-      return
-    }
-
-    onAction(action)
-    setMessageKind('success')
-    setMessage(
-      action === 'observe'
-        ? t(language, 'observerTelemetry')
-        : `${t(language, 'actionCompleted')}: ${actionLabel(language, action)}`,
-    )
+    previewSnapshot.current = portal
+    setPendingAction(action)
   }
-
   const confirmPendingAction = () => {
-    if (!pendingAction) {
-      return
-    }
-    const validation = validateAction(portal, pendingAction)
-    if (!validation.allowed && validation.reasonCode) {
-      showRejectedMessage(pendingAction, validation.reasonCode)
+    if (!pendingAction || executionLatch.current) return
+    if (previewSnapshot.current !== portal) {
       setPendingAction(null)
+      setFeedback('error')
       return
     }
-
-    onAction(pendingAction)
-    setMessageKind('success')
-    setMessage(
-      `${t(language, 'actionCompleted')}: ${actionLabel(language, pendingAction)}`,
-    )
-    setPendingAction(null)
+    execute(pendingAction, true)
   }
-
+  const preview = pendingAction ? applyAction(portal, pendingAction) : null
+  const previewRisk = preview ? calculateRisk(preview) : null
   const pendingReason =
     pendingAction && validations[pendingAction].reasonCode
-      ? actionReason(
-          language,
-          validations[pendingAction].reasonCode as ActionReasonCode,
-          portal.creatures,
-        )
+      ? actionReason(language, validations[pendingAction].reasonCode!, portal.creatures)
       : null
 
   return (
-    <div className="panel-backdrop" role="presentation">
+    <div className="panel-backdrop portal-backdrop" role="presentation">
       <section
         className="portal-panel"
         role="dialog"
         aria-modal="true"
         aria-label={`${portal.name} control panel`}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape' && pendingAction) {
+            event.preventDefault()
+            event.stopPropagation()
+            setPendingAction(null)
+          }
+        }}
       >
         <div className="portal-panel__header">
           <div>
@@ -154,14 +170,23 @@ export function PortalControlPanel({
             <p>{portal.destination}</p>
           </div>
 
-          <button
-            type="button"
-            className="portal-panel__close"
-            onClick={onClose}
-            aria-label={t(language, 'closePanel')}
-          >
-            ×
-          </button>
+          <div className="panel-tools">
+            <button
+              className="panel-language"
+              onClick={() => onLanguageChange(ru ? 'en' : 'ru')}
+              aria-label={ru ? 'Switch to English' : 'Переключить на русский'}
+            >
+              {ru ? 'EN' : 'RU'}
+            </button>
+            <button
+              type="button"
+              className="portal-panel__close"
+              onClick={onClose}
+              aria-label={t(language, 'closePanel')}
+            >
+              ×
+            </button>
+          </div>
         </div>
 
         <div className="portal-panel__content">
@@ -190,7 +215,11 @@ export function PortalControlPanel({
               value={
                 portal.status === 'closed'
                   ? '—'
-                  : `${portal.collapseMinutes} ${t(language, 'minutes')}`
+                  : portal.collapseMinutes <= 0
+                    ? ru
+                      ? 'ОКНО ИСТЕКЛО'
+                      : 'WINDOW EXPIRED'
+                    : `${portal.collapseMinutes} ${t(language, 'minutes')}`
               }
             />
 
@@ -205,7 +234,7 @@ export function PortalControlPanel({
                 <strong>{riskLevelLabel(language, risk.level)}</strong>
               </div>
 
-              <div className="risk-console__score">{risk.score}</div>
+              <AnimatedRisk score={risk.score} />
             </div>
 
             <div className="risk-console__bar">
@@ -252,13 +281,22 @@ export function PortalControlPanel({
                     .filter(Boolean)
                     .join(' ')}
                   onClick={() => handleAction(action)}
+                  disabled={busy !== null}
+                  aria-disabled={isBlocked || busy !== null}
+                  aria-busy={busy === action}
                   title={
                     validation.reasonCode
                       ? actionReason(language, validation.reasonCode, portal.creatures)
                       : undefined
                   }
                 >
-                  <span>{actionLabel(language, action)}</span>
+                  <span>
+                    {busy === action
+                      ? ru
+                        ? 'ВЫПОЛНЕНИЕ…'
+                        : 'EXECUTING…'
+                      : actionLabel(language, action)}
+                  </span>
 
                   <small>
                     {isBlocked && validation.reasonCode
@@ -268,8 +306,8 @@ export function PortalControlPanel({
                         : portal.status === 'closed'
                           ? t(language, 'offline')
                           : ru
-                            ? 'ВЫПОЛНИТЬ'
-                            : 'EXECUTE'}
+                            ? 'ПРЕДПРОСМОТР →'
+                            : 'PREVIEW →'}
                   </small>
                 </button>
               )
@@ -301,11 +339,57 @@ export function PortalControlPanel({
             </div>
           )}
 
-          {pendingAction && pendingReason && (
-            <div className="confirmation-box" role="alert" ref={feedbackRef}>
-              <strong>{t(language, 'warning')}</strong>
-
-              <p>{pendingReason}</p>
+          {pendingAction && preview && previewRisk && (
+            <div
+              className="confirmation-box action-preview"
+              role={pendingReason ? 'alert' : 'region'}
+              aria-label={ru ? 'Предпросмотр действия' : 'Action preview'}
+              ref={feedbackRef}
+            >
+              <strong>
+                {actionLabel(language, pendingAction)} · {ru ? 'ПРЕДПРОСМОТР' : 'PREVIEW'}
+              </strong>
+              {pendingReason && <p className="preview-warning">{pendingReason}</p>}
+              <dl className="preview-grid">
+                <div>
+                  <dt>{t(language, 'riskAssessment')}</dt>
+                  <dd>
+                    {risk.score} {riskLevelLabel(language, risk.level)} →{' '}
+                    <b>
+                      {previewRisk.score} {riskLevelLabel(language, previewRisk.level)}
+                    </b>
+                  </dd>
+                </div>
+                <div>
+                  <dt>{t(language, 'stability')}</dt>
+                  <dd>
+                    {portal.stability}% → <b>{preview.stability}%</b>
+                  </dd>
+                </div>
+                <div>
+                  <dt>{t(language, 'energy')}</dt>
+                  <dd>
+                    {portal.energy}% → <b>{preview.energy}%</b>
+                  </dd>
+                </div>
+                <div>
+                  <dt>{t(language, 'collapse')}</dt>
+                  <dd>
+                    {portal.collapseMinutes} →{' '}
+                    <b>
+                      {preview.status === 'closed' ? '—' : preview.collapseMinutes}{' '}
+                      {t(language, 'minutes')}
+                    </b>
+                  </dd>
+                </div>
+              </dl>
+              <p className="subtle-copy">
+                {pendingAction === 'observe'
+                  ? t(language, 'observerTelemetry')
+                  : ru
+                    ? 'Это прогноз. Данные изменятся только после подтверждения.'
+                    : 'This is a preview. Data changes only after confirmation.'}
+              </p>
 
               <div>
                 <button type="button" onClick={() => setPendingAction(null)}>
@@ -317,7 +401,11 @@ export function PortalControlPanel({
                   className="confirmation-box__danger"
                   onClick={confirmPendingAction}
                 >
-                  {t(language, 'forceClose')}
+                  {pendingAction === 'close' && portal.creatures > 0
+                    ? t(language, 'forceClose')
+                    : ru
+                      ? 'ПОДТВЕРДИТЬ'
+                      : 'CONFIRM'}
                 </button>
               </div>
             </div>
@@ -329,7 +417,14 @@ export function PortalControlPanel({
             ) : (
               <ol>
                 {[...events].reverse().map((event) => (
-                  <li key={event.id}>
+                  <li
+                    key={event.id}
+                    className={
+                      typeof feedback === 'object' && feedback?.id === event.id
+                        ? 'event-new'
+                        : ''
+                    }
+                  >
                     <time dateTime={event.timestamp}>
                       {new Date(event.timestamp).toLocaleString(ru ? 'ru-RU' : 'en-GB')}
                     </time>
@@ -342,7 +437,10 @@ export function PortalControlPanel({
                     </span>
                     {event.reasonCode && (
                       <small>
-                        {actionReason(language, event.reasonCode, event.creatureCount)}
+                        {event.status === 'success' &&
+                        event.reasonCode === 'creaturesInside'
+                          ? acknowledgedWarning(language, event.creatureCount)
+                          : actionReason(language, event.reasonCode, event.creatureCount)}
                       </small>
                     )}
                   </li>

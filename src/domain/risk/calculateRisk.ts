@@ -1,11 +1,6 @@
-import type {
-  Portal,
-  RiskAssessment,
-  RiskFactor,
-  RiskLevel,
-} from '../../types/portal'
+import type { Portal, RiskAssessment, RiskFactor, RiskLevel } from '../../types/portal'
 
-function getRiskLevel(score: number): RiskLevel {
+export function getRiskLevel(score: number): RiskLevel {
   if (score >= 75) return 'CRITICAL'
   if (score >= 50) return 'HIGH'
   if (score >= 25) return 'MEDIUM'

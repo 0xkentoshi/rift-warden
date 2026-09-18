@@ -1,4 +1,10 @@
-import { actionLabel, actionReason, t, type Language } from '../../i18n/translations'
+import {
+  actionLabel,
+  actionReason,
+  acknowledgedWarning,
+  t,
+  type Language,
+} from '../../i18n/translations'
 import type { AuditEvent } from '../../types/audit'
 
 interface EventLogPanelProps {
@@ -6,6 +12,7 @@ interface EventLogPanelProps {
   language: Language
   onClose: () => void
   onClear: () => void
+  latestEventId?: string
 }
 
 export function EventLogPanel({
@@ -13,6 +20,7 @@ export function EventLogPanel({
   language,
   onClose,
   onClear,
+  latestEventId,
 }: EventLogPanelProps) {
   const locale = language === 'ru' ? 'ru-RU' : 'en-GB'
 
@@ -48,7 +56,9 @@ export function EventLogPanel({
             <div className="event-list">
               {[...events].reverse().map((event) => {
                 const reason = event.reasonCode
-                  ? actionReason(language, event.reasonCode, event.creatureCount ?? 0)
+                  ? event.status === 'success' && event.reasonCode === 'creaturesInside'
+                    ? acknowledgedWarning(language, event.creatureCount)
+                    : actionReason(language, event.reasonCode, event.creatureCount ?? 0)
                   : null
 
                 return (
@@ -56,6 +66,7 @@ export function EventLogPanel({
                     key={event.id}
                     className={[
                       'event-entry',
+                      event.id === latestEventId ? 'event-new' : '',
                       event.status === 'rejected' ? 'event-entry--rejected' : '',
                     ]
                       .filter(Boolean)

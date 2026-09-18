@@ -6,6 +6,7 @@ import {
   SCENE,
   START_POSITION,
   type Point,
+  walkableZones,
 } from '../data/labLayout'
 import {
   isBlocked,
@@ -13,6 +14,7 @@ import {
   nearestPortal,
   screenToScene,
   viewportTransform,
+  isWalkable,
 } from '../game/geometry'
 import { riskToVfx } from '../game/effects'
 import { initialPortals } from '../data/portals'
@@ -129,6 +131,43 @@ describe('scene movement and coordinates', () => {
         queue.some((n) => Math.hypot(n.x - p.approach.x, n.y - p.approach.y) < 15),
         id,
       ).toBe(true)
+  })
+  it('keeps every stair route open and its side masonry blocked', () => {
+    for (const zone of walkableZones) {
+      if (zone.type !== 'path' || !zone.portalId) continue
+      for (let step = 0; step <= 20; step++) {
+        const point = {
+          x: zone.from.x + ((zone.to.x - zone.from.x) * step) / 20,
+          y: zone.from.y + ((zone.to.y - zone.from.y) * step) / 20,
+        }
+        expect(isBlocked(point), zone.id + ' step ' + step).toBe(false)
+      }
+      const rect = portalPositions[zone.portalId].collider
+      expect(isBlocked({ x: rect.x + 12, y: rect.y + 60 }), zone.id).toBe(true)
+    }
+  })
+  it('cannot leave the carpet/path/stair union even on a long diagonal movement', () => {
+    for (const delta of [
+      { x: -900, y: 0 },
+      { x: 0, y: -900 },
+      { x: 700, y: 600 },
+      { x: -700, y: 600 },
+    ]) {
+      const next = moveWithCollisions(START_POSITION, delta)
+      expect(isWalkable(next)).toBe(true)
+      expect(isBlocked(next)).toBe(false)
+    }
+    expect(isWalkable({ x: 500, y: 450 })).toBe(false)
+    expect(isWalkable({ x: 1170, y: 760 })).toBe(false)
+  })
+  it('selects the nearest valid portal when two interaction circles overlap', () => {
+    const base = portalPositions['crimson-gate']
+    const placements = {
+      a: { ...base, approach: { x: 10, y: 10 }, interactionRadius: 40 },
+      b: { ...base, approach: { x: 30, y: 10 }, interactionRadius: 40 },
+    }
+    expect(nearestPortal({ x: 25, y: 10 }, ['a', 'b'], placements)).toBe('b')
+    expect(nearestPortal({ x: 200, y: 10 }, ['a', 'b'], placements)).toBeNull()
   })
 })
 describe('state-driven presentation', () => {

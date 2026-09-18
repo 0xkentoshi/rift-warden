@@ -86,6 +86,7 @@ const reasons = [
   'alreadyStable',
   'alreadyUncertain',
   'creaturesInside',
+  'collapseExpired',
 ]
 function isEvent(v: unknown): v is AuditEvent {
   return (

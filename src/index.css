@@ -5,7 +5,7 @@
   font-synthesis: none;
   --text: #f3e9d4;
   --muted: #b5aeb5;
-  --line-soft: #73637145;
+  --line-soft: #8d795340;
   --gold: #eac781;
   --green: #79e3b4;
   --cyan: #8fe0df;
@@ -74,6 +74,34 @@ button {
   inset: 0;
   pointer-events: none;
   z-index: 1;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+.silent-arch-occlusion {
+  position: absolute;
+  inset: 0;
+  z-index: 660;
+  pointer-events: none;
+  background: url('./assets/laboratory-clean.png') center / cover no-repeat;
+  clip-path: polygon(
+    767px 664px,
+    791px 634px,
+    815px 619px,
+    850px 619px,
+    880px 639px,
+    901px 667px,
+    909px 701px,
+    909px 785px,
+    881px 791px,
+    881px 698px,
+    864px 677px,
+    836px 662px,
+    810px 678px,
+    792px 703px,
+    792px 791px,
+    763px 784px
+  );
 }
 .hud {
   position: absolute;
@@ -85,7 +113,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 22px;
-  background: linear-gradient(#080b10f5, #090b12cf 85%, transparent);
+  background: linear-gradient(#080e13ab, #090f146b 85%, transparent);
   border-bottom: 1px solid #dec99b20;
 }
 .hud__brand {
@@ -118,12 +146,15 @@ button {
   gap: 10px;
 }
 .hud__stat {
-  border: 1px solid #756a5f;
-  border-radius: 2px;
+  border: 2px solid #8c794e8f;
+  border-radius: 0;
   min-width: 83px;
   text-align: center;
   padding: 6px 10px;
-  background: #0b0d14c9;
+  background: #0b151aab;
+  box-shadow:
+    inset 1px 1px #cfb78222,
+    2px 2px #060d1080;
   display: grid;
   gap: 3px;
   color: #56e6c3;
@@ -155,8 +186,8 @@ button {
 .hud__nav button,
 .lab-tools button {
   border: 1px solid #7f68725e;
-  border-radius: 3px;
-  background: linear-gradient(#302333eb, #1f1925eb);
+  border-radius: 0;
+  background: linear-gradient(#2d3431c9, #172421dc);
   min-height: 38px;
   padding: 8px 13px;
   font-size: 11px;
@@ -296,21 +327,25 @@ kbd {
   position: absolute;
   z-index: 1100;
   transform: translate(-50%, -50%);
-  width: 180px;
+  width: 235px;
   min-height: 65px;
   padding: 7px 10px;
   display: grid;
   gap: 3px;
   color: #f6f0e5;
-  border: 1px solid #736978aa;
-  border-radius: 3px;
-  background: linear-gradient(#10151af5, #0b0e15f5);
-  box-shadow: 0 5px 12px #0007;
+  border: 2px solid #b2975e;
+  border-radius: 0;
+  background: #10191cf2;
+  box-shadow:
+    3px 3px #070c11,
+    inset 0 0 0 2px #e6c8801c;
+  animation: contextual-enter 180ms steps(4);
   text-align: center;
 }
 .portal-label strong {
   font-size: 14px;
-  font-weight: 650;
+  font-family: 'Courier New', monospace;
+  font-weight: 900;
   letter-spacing: 0.02em;
 }
 .portal-label small {
@@ -401,6 +436,91 @@ kbd {
 }
 .collision-debug .player-collider {
   fill: #38ffff;
+}
+.collision-debug .walkable-debug {
+  fill: #69d9ff24;
+  stroke: #69d9ff55;
+  stroke-linecap: round;
+}
+.collision-debug line.walkable-debug {
+  fill: none;
+}
+.first-hint {
+  position: absolute;
+  z-index: 1900;
+  bottom: 62px;
+  right: 22px;
+  width: min(370px, 40vw);
+  padding: 16px;
+  display: flex;
+  gap: 14px;
+  background: #111c1de8;
+  border: 2px solid #8c7850;
+  box-shadow:
+    3px 3px #060c12,
+    inset 0 0 0 2px #edd59613;
+}
+.first-hint__icon {
+  font-size: 28px;
+  color: #ecc77c;
+}
+.first-hint strong {
+  font:
+    900 13px 'Courier New',
+    monospace;
+  color: #f2dca9;
+  letter-spacing: 0.04em;
+}
+.first-hint p {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 6px 0 10px;
+}
+.first-hint small {
+  font-size: 11px;
+  color: #c5cfc5;
+  line-height: 2;
+}
+.journal-ping {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  background: #8cffe2;
+  margin-left: 7px;
+  animation: journal-ping 2s steps(4) forwards;
+}
+.counter-value {
+  animation: counter-pop 450ms steps(4);
+}
+@keyframes contextual-enter {
+  from {
+    opacity: 0;
+    margin-top: 4px;
+  }
+  to {
+    opacity: 1;
+    margin-top: 0;
+  }
+}
+@keyframes counter-pop {
+  50% {
+    text-shadow: 0 0 10px currentColor;
+    transform: translateY(-2px);
+  }
+}
+@keyframes journal-ping {
+  25%,
+  75% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@media (max-width: 600px) {
+  .first-hint {
+    display: none;
+  }
 }
 .laboratory-empty {
   position: absolute;

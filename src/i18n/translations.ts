@@ -1,11 +1,5 @@
-import type {
-  RiskFactorCode,
-  RiskLevel,
-} from '../types/portal'
-import type {
-  ActionReasonCode,
-  PortalAction,
-} from '../domain/validation/validateAction'
+import type { RiskFactorCode, RiskLevel } from '../types/portal'
+import type { ActionReasonCode, PortalAction } from '../domain/validation/validateAction'
 
 export type Language = 'en' | 'ru'
 
@@ -124,17 +118,11 @@ const translations = {
 
 export type TranslationKey = keyof typeof translations.en
 
-export function t(
-  language: Language,
-  key: TranslationKey,
-): string {
+export function t(language: Language, key: TranslationKey): string {
   return translations[language][key]
 }
 
-const riskLevelLabels: Record<
-  Language,
-  Record<RiskLevel, string>
-> = {
+const riskLevelLabels: Record<Language, Record<RiskLevel, string>> = {
   en: {
     LOW: 'LOW',
     MEDIUM: 'MEDIUM',
@@ -149,17 +137,11 @@ const riskLevelLabels: Record<
   },
 }
 
-export function riskLevelLabel(
-  language: Language,
-  level: RiskLevel,
-): string {
+export function riskLevelLabel(language: Language, level: RiskLevel): string {
   return riskLevelLabels[language][level]
 }
 
-const riskFactorLabels: Record<
-  Language,
-  Record<RiskFactorCode, string>
-> = {
+const riskFactorLabels: Record<Language, Record<RiskFactorCode, string>> = {
   en: {
     criticallyLowStability: 'Critically low stability',
     lowStability: 'Low stability',
@@ -190,17 +172,11 @@ const riskFactorLabels: Record<
   },
 }
 
-export function riskFactorLabel(
-  language: Language,
-  code: RiskFactorCode,
-): string {
+export function riskFactorLabel(language: Language, code: RiskFactorCode): string {
   return riskFactorLabels[language][code]
 }
 
-const actionLabels: Record<
-  Language,
-  Record<PortalAction, string>
-> = {
+const actionLabels: Record<Language, Record<PortalAction, string>> = {
   en: {
     stabilize: 'STABILIZE',
     observe: 'SEND OBSERVER',
@@ -215,10 +191,7 @@ const actionLabels: Record<
   },
 }
 
-export function actionLabel(
-  language: Language,
-  action: PortalAction,
-): string {
+export function actionLabel(language: Language, action: PortalAction): string {
   return actionLabels[language][action]
 }
 
@@ -231,6 +204,10 @@ export function actionReason(
     Exclude<ActionReasonCode, 'creaturesInside'>,
     Record<Language, string>
   > = {
+    collapseExpired: {
+      en: 'The collapse window has expired. Close and secure the portal; deployment and stabilization are unavailable.',
+      ru: 'Окно до схлопывания истекло. Закройте и обезопасьте портал; наблюдение и стабилизация недоступны.',
+    },
     alreadyClosed: {
       en: 'This portal is already closed.',
       ru: 'Этот портал уже закрыт.',
@@ -258,4 +235,10 @@ export function actionReason(
   }
 
   return reasons[code][language]
+}
+
+export function acknowledgedWarning(language: Language, count = 0): string {
+  return language === 'ru'
+    ? `Предупреждение подтверждено: внутри осталось существ — ${count}. Портал закрыт по решению оператора.`
+    : `Warning acknowledged: ${count} occupants remained inside. Portal closed by operator decision.`
 }
