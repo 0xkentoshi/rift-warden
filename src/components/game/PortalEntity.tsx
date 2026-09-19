@@ -1,17 +1,25 @@
 import { portalPositions } from '../../data/labLayout'
-import { calculateRisk } from '../../domain/risk/calculateRisk'
+import { effectiveRisk } from '../../domain/simulation/network'
+import { countdown, statusLabel } from '../../i18n/gameplay'
 import { t, riskLevelLabel, type Language } from '../../i18n/translations'
 import type { Portal } from '../../types/portal'
 
 interface Props {
   portal: Portal
+  network?: Portal[]
   nearby: boolean
   language: Language
   onOpen: () => void
 }
-export function PortalEntity({ portal, nearby, language, onOpen }: Props) {
+export function PortalEntity({
+  portal,
+  network = [portal],
+  nearby,
+  language,
+  onOpen,
+}: Props) {
   const p = portalPositions[portal.id]
-  const risk = calculateRisk(portal)
+  const risk = effectiveRisk(portal, network)
   if (!p) return null
   return (
     <>
@@ -43,10 +51,13 @@ export function PortalEntity({ portal, nearby, language, onOpen }: Props) {
             {portal.creatures}
           </small>
           <span>
-            {portal.status === 'closed'
-              ? t(language, 'offline')
+            {portal.status !== 'open'
+              ? statusLabel(language, portal.status)
               : riskLevelLabel(language, risk.level) + ' · ' + risk.score}
           </span>
+          <small>
+            Intel {portal.intel}% · {countdown(portal)}
+          </small>
           <small>
             <kbd>E</kbd> {t(language, 'inspect')}
           </small>

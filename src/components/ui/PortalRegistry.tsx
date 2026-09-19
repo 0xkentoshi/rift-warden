@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { calculateRisk } from '../../domain/risk/calculateRisk'
+import { effectiveRisk, isLive } from '../../domain/simulation/network'
+import { countdown, statusLabel } from '../../i18n/gameplay'
 import { riskLevelLabel, t, type Language } from '../../i18n/translations'
 import type { Portal } from '../../types/portal'
 import { Modal } from './Modal'
@@ -23,9 +24,9 @@ export function PortalRegistry({
       (p) =>
         filter === 'all' ||
         p.status === filter ||
-        (filter === 'attention' && p.status === 'open' && calculateRisk(p).score >= 25),
+        (filter === 'attention' && isLive(p) && effectiveRisk(p, portals).score >= 25),
     )
-    .sort((a, b) => calculateRisk(b).score - calculateRisk(a).score)
+    .sort((a, b) => effectiveRisk(b, portals).score - effectiveRisk(a, portals).score)
   return (
     <Modal
       title={ru ? 'Реестр порталов' : 'Portal registry'}
@@ -34,8 +35,8 @@ export function PortalRegistry({
     >
       <p className="intro-copy">
         {ru
-          ? 'Вы — смотритель. Начните с опасного портала: изучите риск, стабилизируйте его или закройте с учётом существ внутри. Все действия сохраняются в журнале.'
-          : 'You are the warden. Start with a dangerous portal: inspect its risk, stabilize it or close it after checking for creatures. Every action is recorded.'}
+          ? 'Вы — смотритель. Начните с зелёного портала: изучите риск, стабилизируйте его или закройте с учётом существ внутри. Все действия сохраняются в журнале.'
+          : 'You are the warden. Start with the green portal: inspect its risk, stabilize it or close it after checking for creatures. Every action is recorded.'}
       </p>
       <label className="registry-filter">
         {ru ? 'Показать' : 'Show'}{' '}
@@ -44,6 +45,8 @@ export function PortalRegistry({
           <option value="attention">{ru ? 'С риском от 25' : 'Risk 25 and above'}</option>
           <option value="open">{t(language, 'open')}</option>
           <option value="closed">{t(language, 'closed')}</option>
+          <option value="quarantined">{statusLabel(language, 'quarantined')}</option>
+          <option value="collapsed">{statusLabel(language, 'collapsed')}</option>
         </select>
       </label>
       {visible.length ? (
@@ -57,6 +60,7 @@ export function PortalRegistry({
                   t(language, 'stability'),
                   t(language, 'collapse'),
                   t(language, 'creatures'),
+                  'Intel',
                   ru ? 'Статус / риск' : 'Status / risk',
                 ].map((v) => (
                   <th key={v}>{v}</th>
@@ -65,7 +69,7 @@ export function PortalRegistry({
             </thead>
             <tbody>
               {visible.map((portal, index) => {
-                const risk = calculateRisk(portal)
+                const risk = effectiveRisk(portal, portals)
                 return (
                   <tr
                     key={portal.id}
@@ -86,23 +90,18 @@ export function PortalRegistry({
                     </td>
                     <td>{portal.energy}%</td>
                     <td>{portal.stability}%</td>
-                    <td>
-                      {portal.status === 'closed'
-                        ? '—'
-                        : portal.collapseMinutes + ' ' + t(language, 'minutes')}
-                    </td>
+                    <td>{countdown(portal)}</td>
                     <td>{portal.creatures}</td>
+                    <td>{portal.intel}%</td>
                     <td>
                       <span
                         className={'risk-text risk-text--' + risk.level.toLowerCase()}
                       >
-                        {portal.status === 'closed'
-                          ? t(language, 'closed')
-                          : t(language, 'open') +
-                            ' · ' +
-                            riskLevelLabel(language, risk.level) +
-                            ' ' +
-                            risk.score}
+                        {statusLabel(language, portal.status) +
+                          ' · ' +
+                          riskLevelLabel(language, risk.level) +
+                          ' ' +
+                          risk.score}
                       </span>
                       {portal.uncertain && (
                         <small>{ru ? 'Под вопросом' : 'Uncertain'}</small>
@@ -125,8 +124,8 @@ export function PortalRegistry({
       )}
       <p className="subtle-copy">
         {ru
-          ? 'Время до схлопывания — показание телеметрии, а не таймер реального времени.'
-          : 'Time to collapse is a telemetry reading, not a live countdown.'}
+          ? 'Время — живой обратный отсчёт. Во всех окнах оно на паузе. Изоляция замедляет его в 4 раза.'
+          : 'Time is a live countdown. Every modal pauses it. Quarantine slows it fourfold.'}
       </p>
     </Modal>
   )

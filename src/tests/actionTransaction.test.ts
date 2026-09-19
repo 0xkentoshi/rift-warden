@@ -25,7 +25,7 @@ describe('action transaction boundary', () => {
       expect(result.event).toMatchObject({
         reasonCode: 'creaturesInside',
         creatureCount: 3,
-        beforeRisk: 93,
+        beforeRisk: 83,
         afterRisk: 0,
       })
   })

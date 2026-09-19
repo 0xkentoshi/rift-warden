@@ -2,6 +2,12 @@ import type { Language } from '../../i18n/translations'
 import { Modal } from './Modal'
 const stages = [
   [
+    'Gameplay Systems Redesign',
+    'Задал исследование с ценой, карантин, таймер, каскад, понятный restart и приоритет исходного ТЗ. Попросил улучшать рабочую основу без переделки ассетов.',
+    'Расширил доменную модель и единые preview/commit, добавил Intel, давление сети, фазы смены и монотонный таймер. Проверил баланс и паузу тестами; UI и сценарии — отдельно в браузере.',
+    'Не ломать ТЗ: понятная формула, быстрый reviewer path, честный журнал и Worklog. Поверх принятого фона — законченный цикл исследования и сдерживания.',
+  ],
+  [
     'Идея и ТЗ',
     'Выбрал пространственную лабораторию и утвердил художественный референс. Передал исходное ТЗ.',
     'Сопоставил исходный код с требованиями: нашёл отсутствие Worklog, рекомендаций и истории в карточке.',
@@ -51,6 +57,12 @@ const stages = [
   ],
 ]
 const stagesEn = [
+  [
+    'Gameplay Systems Redesign',
+    'Specified paid research, quarantine, a live countdown, cascade, coherent restart and preservation of the original assignment. Requested improvements to the working foundation without regenerating assets.',
+    'Extended the domain and shared preview/commit, implemented Intel, network pressure, shift phases and a monotonic clock. Checked balance and pause with tests; reviewed UI workflows separately in the browser.',
+    'Preserve the brief: explained risk, a quick review path, honest audit and worklog. Build a complete research/containment loop over the approved background.',
+  ],
   [
     'Idea and brief',
     'Chose the spatial laboratory, approved the art reference and supplied the original assignment.',
@@ -127,13 +139,11 @@ export function AIWorklog({
         </article>
         <article>
           <small>{ru ? 'Время разработки' : 'Development time'}</small>
-          <strong>
-            {ru ? 'Точный общий учёт не вёлся' : 'Total time was not tracked'}
-          </strong>
+          <strong>{ru ? 'Примерно 8+ часов' : 'Approximately 8+ hours'}</strong>
           <p>
             {ru
-              ? 'Предыдущие итерации исключены из учёта по просьбе автора. Зафиксированные отметки этой доработки — в docs/qa-checklist.md; они не равны общему времени разработки.'
-              : 'Earlier iterations are excluded at the author’s request. Recorded checkpoints are in docs/qa-checklist.md; they are not the total development time.'}
+              ? 'Оценка автора: на текущий момент суммарно затрачено примерно 8+ часов активной разработки. Проект продолжает дорабатываться; точный поминутный таймер не вёлся.'
+              : 'Author-provided estimate: approximately 8+ hours of active development so far. Work is ongoing; no precise minute-by-minute timer was kept.'}
           </p>
         </article>
         <article>
@@ -205,6 +215,11 @@ export function AIWorklog({
         {ru
           ? 'Pixelify Sans подходил по стилю, но автор заметил плохую читаемость кириллицы, латиницы и цифр. AI заменил его: пиксельные заголовки сохранены, мелкий текст и значения переведены на PT Mono. У нового sprite sheet строки оказались не идеально равномерными; смещения кадров откалиброваны в CSS без изменения movement system.'
           : 'Pixelify Sans matched the style but the author found Cyrillic, Latin and numbers hard to read. AI replaced it with pixel headings and PT Mono copy/values. The generated sprite rows were not perfectly uniform, so CSS frame offsets were calibrated without changing the movement system.'}
+      </p>
+      <p>
+        {ru
+          ? 'В новом gameplay-патче AI обнаружил риск тупика: запрет стабилизации при высокой стабильности мешал снижать энергию перед повторными экспедициями. Правило уточнено: при энергии от 60 стабилизация снова допустима. Старые ожидания тестов обновлены только там, где изменились seed и давление сети; проверки исходного risk engine сохранены.'
+          : 'During the gameplay patch, AI identified a deadlock: blocking stabilization at high stability prevented venting energy for repeat expeditions. Stabilization now remains available at energy 60 or higher. Old test expectations changed only for the new seed/network pressure; intrinsic risk-engine checks remain intact.'}
       </p>
       <h3>{ru ? 'Что сделано вручную' : 'Manual contributions'}</h3>
       <p>

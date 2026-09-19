@@ -235,7 +235,7 @@ describe('state-driven presentation', () => {
   })
   it('recommends safe actions and sorts the priority queue by risk', () => {
     expect(recommendAction(initialPortals[0])).toBe('stabilize')
-    expect(recommendAction(initialPortals[4])).toBe('monitor')
+    expect(recommendAction(initialPortals[4])).toBe('close')
     expect(recommendAction(initialPortals[5])).toBe('closed')
     expect(priorityPortals(initialPortals).map((p) => p.id)).toEqual([
       'crimson-gate',

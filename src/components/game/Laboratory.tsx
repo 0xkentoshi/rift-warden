@@ -4,7 +4,8 @@ import { isInteractionCode } from '../../domain/input/keyboard'
 import { nearestPortal, viewportTransform } from '../../game/geometry'
 import { useKeyboardMovement } from '../../hooks/useKeyboardMovement'
 import { t, riskLevelLabel, type Language } from '../../i18n/translations'
-import { calculateRisk } from '../../domain/risk/calculateRisk'
+import { effectiveRisk } from '../../domain/simulation/network'
+import { statusLabel } from '../../i18n/gameplay'
 import type { Portal } from '../../types/portal'
 import { Character } from './Character'
 import { PortalEntity } from './PortalEntity'
@@ -110,6 +111,7 @@ export function Laboratory({
           <PortalEntity
             key={portal.id}
             portal={portal}
+            network={portals}
             nearby={nearby === portal.id}
             language={language}
             onOpen={() => inspect(portal.id)}
@@ -180,8 +182,8 @@ export function Laboratory({
             </strong>
             <p>
               {language === 'ru'
-                ? '6 порталов. Начни с красного: усмири опасный разлом.'
-                : '6 portals. Start with the red one: calm the dangerous rift.'}
+                ? '6 порталов. Начни с зелёного: изучи разлом и удержи сеть.'
+                : '6 portals. Start with green: research the rift and contain the network.'}
             </p>
             <small>
               <kbd>WASD / ↑↓←→</kbd> {t(language, 'move')} · <kbd>E</kbd>{' '}
@@ -207,14 +209,14 @@ export function Laboratory({
         </p>
         <div>
           {portals.map((portal) => {
-            const risk = calculateRisk(portal)
+            const risk = effectiveRisk(portal, portals)
             return (
               <button key={portal.id} onClick={() => inspect(portal.id)}>
                 <strong>{portal.name}</strong>
                 <small>{portal.destination}</small>
                 <span className={'risk-text risk-text--' + risk.level.toLowerCase()}>
-                  {portal.status === 'closed'
-                    ? t(language, 'offline')
+                  {portal.status !== 'open'
+                    ? statusLabel(language, portal.status)
                     : riskLevelLabel(language, risk.level) + ' · ' + risk.score}
                 </span>
               </button>

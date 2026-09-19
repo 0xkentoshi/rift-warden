@@ -6,12 +6,14 @@ export function Modal({
   language,
   onClose,
   children,
+  hideClose = false,
 }: {
   title: string
   eyebrow?: string
   language: Language
   onClose: () => void
   children: ReactNode
+  hideClose?: boolean
 }) {
   return (
     <div className="panel-backdrop">
@@ -21,13 +23,15 @@ export function Modal({
             <span className="ops-panel__eyebrow">{eyebrow}</span>
             <h2>{title}</h2>
           </div>
-          <button
-            className="ops-panel__close"
-            onClick={onClose}
-            aria-label={t(language, 'closePanel')}
-          >
-            ×
-          </button>
+          {!hideClose && (
+            <button
+              className="ops-panel__close"
+              onClick={onClose}
+              aria-label={t(language, 'closePanel')}
+            >
+              ×
+            </button>
+          )}
         </div>
         <div className="ops-panel__body">{children}</div>
       </section>

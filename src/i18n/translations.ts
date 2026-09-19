@@ -1,5 +1,6 @@
+import type { AuditAction } from '../types/audit'
 import type { RiskFactorCode, RiskLevel } from '../types/portal'
-import type { ActionReasonCode, PortalAction } from '../domain/validation/validateAction'
+import type { ActionReasonCode } from '../domain/validation/validateAction'
 
 export type Language = 'en' | 'ru'
 
@@ -17,7 +18,7 @@ const translations = {
     inspect: 'INSPECT',
     openTerminal: 'OPEN',
     noActivePortals: 'NO ACTIVE PORTALS',
-    noActivePortalsHint: 'The laboratory is clear. Open SYSTEM to restore demo data.',
+    noActivePortalsHint: 'The laboratory is clear. Open Settings to restart the shift.',
     resetLab: 'RESET LAB',
     riftIdentification: 'RIFT IDENTIFICATION',
     energy: 'ENERGY',
@@ -29,7 +30,7 @@ const translations = {
     unknownTelemetry: 'UNKNOWN TELEMETRY DETECTED - STATE MARKED UNCERTAIN',
     actionRejected: 'ACTION REJECTED',
     actionCompleted: 'ACTION COMPLETED',
-    observerTelemetry: 'Observer deployed successfully. Telemetry stream received.',
+    observerTelemetry: 'Expedition completed. Intel and energy readings updated.',
     warning: 'WARNING',
     cancel: 'CANCEL',
     forceClose: 'FORCE CLOSE',
@@ -84,7 +85,7 @@ const translations = {
     unknownTelemetry: 'ОБНАРУЖЕНА НЕИЗВЕСТНАЯ ТЕЛЕМЕТРИЯ - СОСТОЯНИЕ НЕОПРЕДЕЛЕННО',
     actionRejected: 'ДЕЙСТВИЕ ОТКЛОНЕНО',
     actionCompleted: 'ДЕЙСТВИЕ ВЫПОЛНЕНО',
-    observerTelemetry: 'Наблюдатель отправлен. Телеметрия получена.',
+    observerTelemetry: 'Экспедиция завершена. Данные исследования и энергия обновлены.',
     warning: 'ПРЕДУПРЕЖДЕНИЕ',
     cancel: 'ОТМЕНА',
     forceClose: 'ЗАКРЫТЬ ПРИНУДИТЕЛЬНО',
@@ -176,22 +177,40 @@ export function riskFactorLabel(language: Language, code: RiskFactorCode): strin
   return riskFactorLabels[language][code]
 }
 
-const actionLabels: Record<Language, Record<PortalAction, string>> = {
+const actionLabels: Record<Language, Record<AuditAction, string>> = {
   en: {
     stabilize: 'STABILIZE',
     observe: 'SEND OBSERVER',
     'mark-uncertain': 'MARK UNCERTAIN',
     close: 'CLOSE PORTAL',
+    quarantine: 'QUARANTINE',
+    reactivate: 'REACTIVATE',
+    'observer-returned': 'OBSERVER RETURNED',
+    'collapse-started': 'COLLAPSE IMMINENT',
+    'portal-collapsed': 'PORTAL COLLAPSED',
+    'resonance-shock': 'RESONANCE SHOCK',
+    cascade: 'CASCADE OVERLOAD',
+    'lab-lost': 'LABORATORY LOST',
+    'shift-complete': 'SHIFT COMPLETE',
   },
   ru: {
     stabilize: 'СТАБИЛИЗИРОВАТЬ',
     observe: 'ОТПРАВИТЬ НАБЛЮДАТЕЛЯ',
     'mark-uncertain': 'ПОМЕТИТЬ НЕОПРЕДЕЛЕННЫМ',
     close: 'ЗАКРЫТЬ ПОРТАЛ',
+    quarantine: 'ИЗОЛИРОВАТЬ',
+    reactivate: 'АКТИВИРОВАТЬ',
+    'observer-returned': 'НАБЛЮДАТЕЛЬ ВЕРНУЛСЯ',
+    'collapse-started': 'СХЛОПЫВАНИЕ',
+    'portal-collapsed': 'ПОРТАЛ СХЛОПНУЛСЯ',
+    'resonance-shock': 'РЕЗОНАНСНЫЙ УДАР',
+    cascade: 'КАСКАДНАЯ ПЕРЕГРУЗКА',
+    'lab-lost': 'ЛАБОРАТОРИЯ ПОТЕРЯНА',
+    'shift-complete': 'СМЕНА ЗАВЕРШЕНА',
   },
 }
 
-export function actionLabel(language: Language, action: PortalAction): string {
+export function actionLabel(language: Language, action: AuditAction): string {
   return actionLabels[language][action]
 }
 
@@ -204,6 +223,38 @@ export function actionReason(
     Exclude<ActionReasonCode, 'creaturesInside'>,
     Record<Language, string>
   > = {
+    fullyResearched: {
+      en: 'All available telemetry has already been collected.',
+      ru: 'Все доступные данные уже собраны.',
+    },
+    energyCapacity: {
+      en: 'Not enough energy headroom. Stabilize before another expedition or reactivation.',
+      ru: 'Недостаточно запаса по энергии. Стабилизируйте портал перед экспедицией или активацией.',
+    },
+    quarantined: {
+      en: 'Reactivate the isolated portal before sending an observer.',
+      ru: 'Перед отправкой наблюдателя снимите изоляцию.',
+    },
+    notQuarantined: {
+      en: 'This portal is not isolated.',
+      ru: 'Этот портал не изолирован.',
+    },
+    alreadyQuarantined: {
+      en: 'This portal is already isolated.',
+      ru: 'Этот портал уже изолирован.',
+    },
+    cooldown: {
+      en: 'Containment is cooling down: wait 10 seconds of active gameplay between toggles. Modal time does not count.',
+      ru: 'Контур остывает: между переключениями нужны 10 секунд активной игры. Время в окнах не считается.',
+    },
+    unsafeClosure: {
+      en: 'This portal has not been fully studied. Unknown anomalies or occupants may remain.',
+      ru: 'Портал не полностью изучен. Внутри могут оставаться неизвестные аномалии или существа.',
+    },
+    portalLost: {
+      en: 'Containment has failed. This portal can no longer be operated.',
+      ru: 'Контроль потерян. Действия с этим порталом больше невозможны.',
+    },
     collapseExpired: {
       en: 'The collapse window has expired. Close and secure the portal; deployment and stabilization are unavailable.',
       ru: 'Окно до схлопывания истекло. Закройте и обезопасьте портал; наблюдение и стабилизация недоступны.',

@@ -1,0 +1,152 @@
+/* Operational additions; the approved room and scene coordinates stay fixed. */
+.network-meter {
+  display: block;
+  padding: 5px 0 0;
+  border: 0;
+  background: transparent;
+  color: #ddc48c;
+  font: 12px/1.5 var(--font-readable);
+  text-align: inherit;
+}
+.network-meter:hover {
+  color: #fff0cb;
+}
+.simulation-paused {
+  position: fixed;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5100;
+  padding: 4px 12px;
+  border: 1px solid #b59d64;
+  background: #182725;
+  box-shadow: 2px 2px #080d12;
+  color: #f7dfa9;
+  font-size: 12px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.pause-note {
+  color: #b2d1bd;
+  font-size: 13px;
+}
+.help-steps {
+  padding-left: 24px;
+}
+.help-steps li {
+  padding: 5px 0 9px 8px;
+}
+.help-steps li::marker {
+  color: #dcb979;
+}
+.event-changes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 16px;
+  color: #c6d6c9;
+}
+.event-changes p,
+.event-changes strong {
+  flex-basis: 100%;
+}
+.event-changes strong {
+  color: #e9cd96;
+  font-size: 13px;
+}
+.event-changes span {
+  font-variant-numeric: tabular-nums;
+}
+.portal-history .event-changes {
+  flex-basis: 100%;
+}
+.event-entry--system {
+  border-left-color: #a99ace;
+}
+.result-heading {
+  padding: 14px;
+  border-left: 3px solid #d4b178;
+  background: #d4b1780b;
+}
+.intel-findings {
+  padding: 12px 14px;
+  background: #90cba70b;
+  border: 1px solid #7d9b8240;
+}
+.intel-findings summary {
+  color: #b7dcba;
+  cursor: pointer;
+}
+.intel-findings p {
+  margin-top: 8px;
+}
+.ops-panel details > summary {
+  cursor: pointer;
+  color: #e3c88f;
+}
+.ops-panel details > p {
+  margin-top: 9px;
+}
+.preview-grid {
+  width: 100%;
+}
+.confirmation-box {
+  overflow-wrap: anywhere;
+}
+.portal-panel__metrics {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.portal-panel .metric {
+  min-width: 0;
+}
+.portal-panel .metric__heading {
+  flex-wrap: wrap;
+  gap: 5px;
+}
+@media (max-width: 1150px) and (min-width: 601px) {
+  .network-meter {
+    font-size: 11px;
+  }
+}
+@media (max-width: 600px) {
+  .network-meter {
+    margin: auto;
+    padding-top: 5px;
+    font-size: 12px;
+  }
+  .hud__nav {
+    flex-wrap: wrap;
+  }
+  .simulation-paused {
+    top: 0;
+    font-size: 10px;
+    padding: 1px 10px;
+  }
+  .portal-panel .metric {
+    padding: 10px;
+  }
+  .portal-panel__metrics {
+    gap: 8px;
+  }
+  .portal-panel .metric__heading {
+    font-size: 13px;
+  }
+  .preview-grid {
+    grid-template-columns: 1fr;
+  }
+  .event-entry__meta {
+    font-size: 12px;
+  }
+}
+
+.worklog-stage > div,
+.worklog-facts article,
+.report-metric {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.worklog-stage {
+  min-width: 0;
+}
+.registry-scroll {
+  max-width: 100%;
+}

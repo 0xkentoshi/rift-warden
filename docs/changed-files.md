@@ -1,12 +1,49 @@
-# Что изменено в доработке
+# Gameplay patch — изменённые файлы
 
-- `src/data/labLayout.ts`, `src/game/`, `useKeyboardMovement.ts`: единые координаты, подходы, препятствия, движение и зоны E.
-- `src/components/game/`, `src/components/hud/Hud.tsx`, `src/index.css`: сцена, спрайт, Canvas-эффекты, живые подписи, HUD и мобильный быстрый доступ.
-- `src/assets/laboratory-clean.png`, `warden-walk.png`: очищенный фон и новый персонаж. Происхождение и запросы — в `assets.md`.
-- `PortalControlPanel.tsx`, `SystemReportPanel.tsx`, `EventLogPanel.tsx`, `recommendation.ts`: объяснение риска, рекомендация, история, приоритеты, подтверждение закрытия.
-- `PortalRegistry.tsx`, `AIWorklog.tsx`, `SettingsPanel.tsx`, `Modal.tsx`, `useModalFocus.ts`: реестр, встроенный Worklog, настройки, работа фокуса.
-- `src/storage/labStorage.ts`, `ErrorBoundary.tsx`, `App.tsx`: проверяемое сохранение, восстановление и понятные сообщения об ошибках.
-- `src/tests/`: сохранены исходные тесты, добавлены проверки UI, геометрии, клавиатуры, интеракций и хранения.
-- `README.md`, `docs/`, конфигурация Vite/Vitest, favicon, workflow Pages: запуск, соответствие ТЗ, QA и воспроизводимая публикация.
+База сравнения: опубликованный main 71002aa. Фон, sprite atlas, movement/collision и геометрия остаются неизменными.
 
-Исходные расчёт риска, валидация действий, аудит и сводка сохранены. Архивы старых патчей, бэкапы и неиспользуемые ассеты не входят в публикуемые исходники.
+- `src/App.tsx`
+- `src/components/game/Laboratory.tsx`
+- `src/components/game/PortalEntity.tsx`
+- `src/components/game/SceneEffects.tsx`
+- `src/components/hud/Hud.tsx`
+- `src/components/portal/ActionPreviewDetails.tsx`
+- `src/components/portal/PortalControlPanel.tsx`
+- `src/components/ui/AIWorklog.tsx`
+- `src/components/ui/EventChanges.tsx`
+- `src/components/ui/EventLogPanel.tsx`
+- `src/components/ui/HowToPlay.tsx`
+- `src/components/ui/Modal.tsx`
+- `src/components/ui/PortalRegistry.tsx`
+- `src/components/ui/SettingsPanel.tsx`
+- `src/components/ui/ShiftResult.tsx`
+- `src/components/ui/SystemReportPanel.tsx`
+- `src/data/portals.ts`
+- `src/domain/actions/applyAction.ts`
+- `src/domain/report/calculateLabReport.ts`
+- `src/domain/report/recommendation.ts`
+- `src/domain/risk/calculateRisk.ts`
+- `src/domain/simulation/network.ts`
+- `src/domain/simulation/observer.ts`
+- `src/domain/simulation/runtime.ts`
+- `src/domain/validation/validateAction.ts`
+- `src/game/effects.ts`
+- `src/hooks/useSimulationClock.ts`
+- `src/i18n/gameplay.ts`
+- `src/i18n/translations.ts`
+- `src/main.tsx`
+- `src/storage/labStorage.ts`
+- `src/styles/gameplay.css`
+- `src/tests/actionTransaction.test.ts`
+- `src/tests/actionValidation.test.ts`
+- `src/tests/app.test.tsx`
+- `src/tests/auditRendering.test.tsx`
+- `src/tests/gameplay.test.ts`
+- `src/tests/labReport.test.ts`
+- `src/tests/riskEngine.test.ts`
+- `src/tests/scene.test.ts`
+- `src/tests/storage.test.ts`
+- `src/types/audit.ts`
+- `src/types/portal.ts`
+
+Также: README.md, docs/requirements.md, docs/qa-checklist.md, docs/qa-history-v3.md, docs/gameplay-audit.md, docs/changed-files.md и tools/serve-qa.mjs (локальный QA, не production).

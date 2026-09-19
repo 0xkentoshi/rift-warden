@@ -110,7 +110,7 @@ export function SettingsPanel({
 
           <section className="settings-card settings-card--danger">
             <div>
-              <strong>{ru ? 'Демо-состояние' : 'Demo state'}</strong>
+              <strong>{ru ? 'Новая смена' : 'New shift'}</strong>
               <p>
                 {ru
                   ? 'Сбросить порталы, журнал и состояние лаборатории.'
@@ -118,7 +118,7 @@ export function SettingsPanel({
               </p>
             </div>
             <button type="button" className="ops-button" onClick={onReset}>
-              {ru ? 'СБРОСИТЬ ЛАБ.' : 'RESET LAB'}
+              {ru ? 'НАЧАТЬ ЗАНОВО' : 'RESTART SHIFT'}
             </button>
           </section>
         </div>

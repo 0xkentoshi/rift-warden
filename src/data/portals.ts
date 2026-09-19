@@ -3,11 +3,16 @@ import type { Portal } from '../types/portal'
 export const initialPortals: Portal[] = [
   {
     id: 'crimson-gate',
+    difficulty: 6,
+    intel: 10,
+    observerCount: 0,
+    cooldownMs: 0,
+    collapseTransitionMs: 0,
     name: 'Crimson Gate',
     destination: 'Ashen Hollow',
     energy: 94,
     stability: 16,
-    collapseMinutes: 4,
+    collapseMinutes: 10,
     creatures: 3,
     status: 'open',
     uncertain: false,
@@ -15,6 +20,11 @@ export const initialPortals: Portal[] = [
 
   {
     id: 'mossbound-door',
+    difficulty: 1,
+    intel: 70,
+    observerCount: 0,
+    cooldownMs: 0,
+    collapseTransitionMs: 0,
     name: 'Mossbound Door',
     destination: 'Verdant Reach',
     energy: 47,
@@ -27,6 +37,11 @@ export const initialPortals: Portal[] = [
 
   {
     id: 'mirror-rift',
+    difficulty: 2,
+    intel: 45,
+    observerCount: 0,
+    cooldownMs: 0,
+    collapseTransitionMs: 0,
     name: 'Mirror Rift',
     destination: 'Unknown Reflection',
     energy: 81,
@@ -39,11 +54,16 @@ export const initialPortals: Portal[] = [
 
   {
     id: 'void-passage',
+    difficulty: 5,
+    intel: 30,
+    observerCount: 0,
+    cooldownMs: 0,
+    collapseTransitionMs: 0,
     name: 'Void Passage',
     destination: 'Null Sector',
     energy: 88,
     stability: 29,
-    collapseMinutes: 8,
+    collapseMinutes: 18,
     creatures: 7,
     status: 'open',
     uncertain: false,
@@ -51,6 +71,11 @@ export const initialPortals: Portal[] = [
 
   {
     id: 'azure-bloom',
+    difficulty: 3,
+    intel: 100,
+    observerCount: 0,
+    cooldownMs: 0,
+    collapseTransitionMs: 0,
     name: 'Azure Bloom',
     destination: 'Celestial Garden',
     energy: 31,
@@ -63,6 +88,11 @@ export const initialPortals: Portal[] = [
 
   {
     id: 'silent-arch',
+    difficulty: 4,
+    intel: 100,
+    observerCount: 0,
+    cooldownMs: 0,
+    collapseTransitionMs: 0,
     name: 'Silent Arch',
     destination: 'Archive IX',
     energy: 0,

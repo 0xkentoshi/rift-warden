@@ -42,7 +42,18 @@ const profiles = {
   },
 } as const
 export function riskToVfx(level: RiskLevel, status: PortalStatus) {
-  return status === 'closed'
+  if (status === 'quarantined')
+    return {
+      ...profiles.LOW,
+      particles: 8,
+      speed: 0.15,
+      glow: 0.2,
+      shake: 0,
+      turbulence: 0.05,
+    }
+  if (status === 'collapsing')
+    return { ...profiles.CRITICAL, particles: 360, speed: 3.2, shake: 5 }
+  return status === 'closed' || status === 'collapsed'
     ? {
         particles: 0,
         speed: 0,

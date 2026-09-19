@@ -15,6 +15,11 @@ const criticalPortal: Portal = {
   creatures: 2,
   status: 'open',
   uncertain: false,
+  intel: 0,
+  observerCount: 0,
+  difficulty: 1,
+  cooldownMs: 0,
+  collapseTransitionMs: 0,
 }
 
 describe('portal actions', () => {

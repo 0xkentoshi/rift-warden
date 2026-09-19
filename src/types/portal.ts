@@ -1,4 +1,4 @@
-export type PortalStatus = 'open' | 'closed'
+export type PortalStatus = 'open' | 'quarantined' | 'collapsing' | 'collapsed' | 'closed'
 
 export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
 
@@ -29,6 +29,11 @@ export interface Portal {
   status: PortalStatus
 
   uncertain: boolean
+  intel: number
+  observerCount: number
+  difficulty: number
+  cooldownMs: number
+  collapseTransitionMs: number
 }
 
 export interface RiskFactor {

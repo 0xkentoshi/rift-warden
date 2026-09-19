@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
-import { calculateRisk } from '../../domain/risk/calculateRisk'
+import { effectiveRisk, labResonance } from '../../domain/simulation/network'
+import { bi, countdown, statusLabel, findings } from '../../i18n/gameplay'
+import { EventChanges } from '../ui/EventChanges'
+import { ActionPreviewDetails } from './ActionPreviewDetails'
 import { validateAction, type PortalAction } from '../../domain/validation/validateAction'
 import {
   actionLabel,
-  acknowledgedWarning,
   actionReason,
   riskFactorLabel,
   riskLevelLabel,
@@ -14,11 +16,16 @@ import {
 import type { Portal } from '../../types/portal'
 import type { AuditEvent } from '../../types/audit'
 import { recommendAction } from '../../domain/report/recommendation'
-import { applyAction, type ActionResult } from '../../domain/actions/applyAction'
+import {
+  applyAction,
+  closureKind,
+  type ActionResult,
+} from '../../domain/actions/applyAction'
 import { AnimatedRisk } from './AnimatedRisk'
 
 interface PortalControlPanelProps {
   portal: Portal
+  network: Portal[]
   events: AuditEvent[]
   language: Language
   onClose: () => void
@@ -26,34 +33,70 @@ interface PortalControlPanelProps {
   onLanguageChange: (language: Language) => void
 }
 
-const ACTIONS: PortalAction[] = ['stabilize', 'observe', 'mark-uncertain', 'close']
-
 export function PortalControlPanel({
   portal,
+  network,
   events,
   language,
   onClose,
   onAction,
   onLanguageChange,
 }: PortalControlPanelProps) {
-  const risk = calculateRisk(portal)
+  const risk = effectiveRisk(portal, network)
+  const ACTIONS: PortalAction[] = [
+    'stabilize',
+    'observe',
+    'mark-uncertain',
+    portal.status === 'quarantined' ? 'reactivate' : 'quarantine',
+    'close',
+  ]
   const ru = language === 'ru'
   const recommendations = {
-    close: ru
-      ? 'Окно до схлопывания истекло. Закройте разлом, учтя существ внутри. Это телеметрия, не таймер реального времени.'
-      : 'The collapse window has expired. Secure the rift by closing it, accounting for occupants. This is telemetry, not a live countdown.',
-    closed: ru
-      ? 'Портал закрыт. Дополнительные действия не нужны.'
-      : 'Portal closed. No further action is needed.',
-    stabilize: ru
-      ? 'Стабилизируйте портал: это повысит стабильность, снизит энергию и увеличит время до схлопывания.'
-      : 'Stabilize the portal to raise stability, lower energy and extend the collapse window.',
-    observe: ru
-      ? 'Отправьте наблюдателя, чтобы проверить неопределённую или опасную телеметрию.'
-      : 'Send an observer to inspect uncertain or elevated-risk telemetry.',
-    monitor: ru
-      ? 'Оставьте открытым. Активных угроз нет; при необходимости отправьте наблюдателя.'
-      : 'Keep it open. No active threats; send an observer if needed.',
+    close: bi(
+      language,
+      'Закройте портал. Если он не изучен или внутри есть существа, потребуется предупреждение о принудительном закрытии.',
+      'Close the portal. Unresearched or occupied rifts require a force-close warning.',
+    ),
+    closed: bi(
+      language,
+      'Портал закрыт. Дополнительные действия не нужны.',
+      'Portal closed. No further action is needed.',
+    ),
+    lost: bi(
+      language,
+      'Контроль потерян. Следите за остальной сетью и журналом инцидентов.',
+      'Containment lost. Check the remaining network and incident log.',
+    ),
+    stabilize: bi(
+      language,
+      'Стабилизируйте: +30 стабильности, −15 энергии, +15 минут. Снижение вклада разгрузит сеть.',
+      'Stabilize: +30 stability, −15 energy, +15 minutes. Lower contribution relieves the network.',
+    ),
+    observe: bi(
+      language,
+      'Отправьте наблюдателя: Intel растёт вместе с энергией. Проверьте цену и риск в предпросмотре.',
+      'Send an observer: Intel rises together with energy. Check the cost and risk in the preview.',
+    ),
+    quarantine: bi(
+      language,
+      'Изолируйте угрозу: меньше давления на сеть и медленнее таймер. Исследование временно недоступно.',
+      'Isolate the threat: lower network pressure and a slower timer. Research is temporarily unavailable.',
+    ),
+    reactivate: bi(
+      language,
+      'Снимите изоляцию для продолжения исследования. Активация повышает энергию.',
+      'Reactivate to continue research. Activation raises energy.',
+    ),
+    'mark-uncertain': bi(
+      language,
+      'Пометьте показания для дополнительной проверки.',
+      'Flag these readings for further verification.',
+    ),
+    monitor: bi(
+      language,
+      'Сейчас вмешательство недоступно. Проверьте причины ограничений ниже.',
+      'Intervention is unavailable now. Check the restrictions below.',
+    ),
   }
 
   const [pendingAction, setPendingAction] = useState<PortalAction | null>(null)
@@ -81,7 +124,10 @@ export function PortalControlPanel({
             ? actionReason(language, feedback.reasonCode, feedback.creatureCount)
             : feedback.action === 'observe'
               ? t(language, 'observerTelemetry')
-              : `${actionLabel(language, feedback.action)} · ${feedback.beforeRisk} → ${feedback.afterRisk}`
+              : actionLabel(language, feedback.action) +
+                (feedback.beforeRisk !== feedback.afterRisk
+                  ? ` · ${feedback.beforeRisk} → ${feedback.afterRisk}`
+                  : '')
           : null
   useEffect(() => () => clearTimeout(unlockTimer.current), [])
   const feedbackRef = useRef<HTMLDivElement>(null)
@@ -91,13 +137,9 @@ export function PortalControlPanel({
     if (pendingAction) feedbackRef.current?.querySelector('button')?.focus()
   }, [message, pendingAction])
 
-  const validations = useMemo(
-    () =>
-      Object.fromEntries(
-        ACTIONS.map((action) => [action, validateAction(portal, action)]),
-      ) as Record<PortalAction, ReturnType<typeof validateAction>>,
-    [portal],
-  )
+  const validations = Object.fromEntries(
+    ACTIONS.map((action) => [action, validateAction(portal, action, network)]),
+  ) as Record<PortalAction, ReturnType<typeof validateAction>>
 
   const execute = (action: PortalAction, confirmed = false) => {
     if (executionLatch.current) return
@@ -137,8 +179,13 @@ export function PortalControlPanel({
     }
     execute(pendingAction, true)
   }
-  const preview = pendingAction ? applyAction(portal, pendingAction) : null
-  const previewRisk = preview ? calculateRisk(preview) : null
+  const preview = pendingAction ? applyAction(portal, pendingAction, network) : null
+  const previewRisk = preview
+    ? effectiveRisk(
+        preview,
+        network.map((p) => (p.id === preview.id ? preview : p)),
+      )
+    : null
   const pendingReason =
     pendingAction && validations[pendingAction].reasonCode
       ? actionReason(language, validations[pendingAction].reasonCode!, portal.creatures)
@@ -193,9 +240,9 @@ export function PortalControlPanel({
           <div className="recommendation">
             <strong>
               {ru ? 'РЕКОМЕНДАЦИЯ' : 'RECOMMENDATION'} ·{' '}
-              {portal.status === 'closed' ? t(language, 'closed') : t(language, 'open')}
+              {statusLabel(language, portal.status)}
             </strong>
-            <p>{recommendations[recommendAction(portal)]}</p>
+            <p>{recommendations[recommendAction(portal, network)]}</p>
           </div>
           <div className="portal-panel__metrics">
             <Metric
@@ -210,22 +257,35 @@ export function PortalControlPanel({
               percentage={portal.stability}
             />
 
-            <Metric
-              label={t(language, 'collapse')}
-              value={
-                portal.status === 'closed'
-                  ? '—'
-                  : portal.collapseMinutes <= 0
-                    ? ru
-                      ? 'ОКНО ИСТЕКЛО'
-                      : 'WINDOW EXPIRED'
-                    : `${portal.collapseMinutes} ${t(language, 'minutes')}`
-              }
-            />
+            <Metric label={t(language, 'collapse')} value={countdown(portal)} />
 
             <Metric label={t(language, 'creatures')} value={String(portal.creatures)} />
+            <Metric label="INTEL" value={portal.intel + '%'} percentage={portal.intel} />
+            <Metric
+              label={ru ? 'СЛОЖНОСТЬ' : 'DIFFICULTY'}
+              value={portal.difficulty + ' / 6'}
+            />
           </div>
 
+          <details className="intel-findings">
+            <summary>
+              {ru ? 'Данные экспедиций' : 'Expedition findings'} · {portal.intel}%
+            </summary>
+            {findings(portal, language).map((note) => (
+              <p key={note}>{note}</p>
+            ))}
+          </details>
+          {portal.status === 'quarantined' && (
+            <p className="pause-note">
+              {ru
+                ? 'Изоляция: таймер ×0,25. Intel не растёт.'
+                : 'Quarantine: countdown ×0.25. Intel is frozen.'}{' '}
+              {portal.cooldownMs > 0 &&
+                (ru ? 'До переключения: ' : 'Toggle in: ') +
+                  Math.ceil(portal.cooldownMs / 1000) +
+                  's'}
+            </p>
+          )}
           <div className={`risk-console risk-console--${risk.level.toLowerCase()}`}>
             <div className="risk-console__top">
               <div>
@@ -243,6 +303,18 @@ export function PortalControlPanel({
 
             <details className="risk-formula">
               <summary>{ru ? 'Как считается риск?' : 'How is risk calculated?'}</summary>
+              <p>
+                {ru ? 'Собственный риск' : 'Intrinsic risk'}: {risk.intrinsic} ·{' '}
+                {ru ? 'Давление сети' : 'Network pressure'}: +{risk.pressure} ·{' '}
+                {ru ? 'Итоговый риск' : 'Effective risk'}: {risk.score}
+              </p>
+              <p>
+                {ru ? 'Резонанс лаборатории' : 'Lab resonance'}:{' '}
+                {labResonance(network).score}% ·{' '}
+                {ru
+                  ? 'Вклад других порталов, максимум +25. Портал не давит сам на себя.'
+                  : 'Other portals contribute pressure, capped at +25. Self-contribution is excluded.'}
+              </p>
               <div className="risk-console__factors">
                 {risk.factors.length > 0 ? (
                   risk.factors.map((factor) => (
@@ -295,7 +367,9 @@ export function PortalControlPanel({
                       ? ru
                         ? 'ВЫПОЛНЕНИЕ…'
                         : 'EXECUTING…'
-                      : actionLabel(language, action)}
+                      : action === 'close' && closureKind(portal) === 'safe'
+                        ? bi(language, 'БЕЗОПАСНО ЗАКРЫТЬ', 'SAFE CLOSE')
+                        : actionLabel(language, action)}
                   </span>
 
                   <small>
@@ -350,48 +424,13 @@ export function PortalControlPanel({
                 {actionLabel(language, pendingAction)} · {ru ? 'ПРЕДПРОСМОТР' : 'PREVIEW'}
               </strong>
               {pendingReason && <p className="preview-warning">{pendingReason}</p>}
-              <dl className="preview-grid">
-                <div>
-                  <dt>{t(language, 'riskAssessment')}</dt>
-                  <dd>
-                    {risk.score} {riskLevelLabel(language, risk.level)} →{' '}
-                    <b>
-                      {previewRisk.score} {riskLevelLabel(language, previewRisk.level)}
-                    </b>
-                  </dd>
-                </div>
-                <div>
-                  <dt>{t(language, 'stability')}</dt>
-                  <dd>
-                    {portal.stability}% → <b>{preview.stability}%</b>
-                  </dd>
-                </div>
-                <div>
-                  <dt>{t(language, 'energy')}</dt>
-                  <dd>
-                    {portal.energy}% → <b>{preview.energy}%</b>
-                  </dd>
-                </div>
-                <div>
-                  <dt>{t(language, 'collapse')}</dt>
-                  <dd>
-                    {portal.collapseMinutes} →{' '}
-                    <b>
-                      {preview.status === 'closed' ? '—' : preview.collapseMinutes}{' '}
-                      {t(language, 'minutes')}
-                    </b>
-                  </dd>
-                </div>
-              </dl>
-              <p className="subtle-copy">
-                {pendingAction === 'observe'
-                  ? ru
-                    ? 'После подтверждения наблюдатель проверит портал. Показания останутся прежними; результат появится в журнале.'
-                    : 'After confirmation, an observer will inspect the portal. Readings stay unchanged; the result is recorded in the journal.'
-                  : ru
-                    ? 'Это прогноз. Данные изменятся только после подтверждения.'
-                    : 'This is a preview. Data changes only after confirmation.'}
-              </p>
+              <ActionPreviewDetails
+                portal={portal}
+                preview={preview}
+                network={network}
+                action={pendingAction}
+                language={language}
+              />
 
               <div>
                 <button type="button" onClick={() => setPendingAction(null)}>
@@ -403,7 +442,7 @@ export function PortalControlPanel({
                   className="confirmation-box__danger"
                   onClick={confirmPendingAction}
                 >
-                  {pendingAction === 'close' && portal.creatures > 0
+                  {pendingAction === 'close' && closureKind(portal) === 'forced'
                     ? t(language, 'forceClose')
                     : ru
                       ? 'ПОДТВЕРДИТЬ'
@@ -432,19 +471,13 @@ export function PortalControlPanel({
                     </time>
                     <strong>{actionLabel(language, event.action)}</strong>
                     <span>
-                      {event.status === 'rejected'
-                        ? t(language, 'statusRejected')
-                        : t(language, 'statusSuccess')}{' '}
-                      · {event.beforeRisk} → {event.afterRisk}
+                      {event.category === 'system'
+                        ? bi(language, 'СИСТЕМА', 'SYSTEM')
+                        : event.status === 'rejected'
+                          ? t(language, 'statusRejected')
+                          : t(language, 'statusSuccess')}
                     </span>
-                    {event.reasonCode && (
-                      <small>
-                        {event.status === 'success' &&
-                        event.reasonCode === 'creaturesInside'
-                          ? acknowledgedWarning(language, event.creatureCount)
-                          : actionReason(language, event.reasonCode, event.creatureCount)}
-                      </small>
-                    )}
+                    <EventChanges event={event} language={language} />
                   </li>
                 ))}
               </ol>

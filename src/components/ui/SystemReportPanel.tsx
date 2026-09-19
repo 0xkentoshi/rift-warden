@@ -1,6 +1,7 @@
 import type { LabReport } from '../../domain/report/calculateLabReport'
 import { priorityPortals } from '../../domain/report/recommendation'
-import { calculateRisk } from '../../domain/risk/calculateRisk'
+import { effectiveRisk, labResonance } from '../../domain/simulation/network'
+import { bi } from '../../i18n/gameplay'
 import type { Portal } from '../../types/portal'
 import { actionLabel, t, type Language } from '../../i18n/translations'
 import type { PortalAction } from '../../domain/validation/validateAction'
@@ -12,10 +13,16 @@ interface SystemReportPanelProps {
   language: Language
   onClose: () => void
   onLoadEmptyScenario: () => void
-  onRestoreDemo: () => void
 }
 
-const ACTIONS: PortalAction[] = ['stabilize', 'observe', 'mark-uncertain', 'close']
+const ACTIONS: PortalAction[] = [
+  'stabilize',
+  'observe',
+  'mark-uncertain',
+  'quarantine',
+  'reactivate',
+  'close',
+]
 
 export function SystemReportPanel({
   report,
@@ -24,7 +31,6 @@ export function SystemReportPanel({
   language,
   onClose,
   onLoadEmptyScenario,
-  onRestoreDemo,
 }: SystemReportPanelProps) {
   return (
     <div className="panel-backdrop" role="presentation">
@@ -83,6 +89,38 @@ export function SystemReportPanel({
             />
           </div>
 
+          <div className="report-grid">
+            {(
+              [
+                [bi(language, 'Резонанс', 'Resonance'), report.resonance],
+                [bi(language, 'Исследовано', 'Researched'), report.researched],
+                [bi(language, 'Нерешённые', 'Unresolved'), report.unresolved],
+                [bi(language, 'Изолировано', 'Quarantined'), report.quarantined],
+                [bi(language, 'Схлопнулось', 'Collapsed'), report.collapsed],
+                [
+                  bi(language, 'Принудительных закрытий', 'Forced closures'),
+                  report.forced,
+                ],
+                [bi(language, 'Системных событий', 'System events'), report.systemEvents],
+              ] as const
+            ).map(([label, value]) => (
+              <ReportMetric key={label} label={label} value={value} />
+            ))}
+          </div>
+          <details>
+            <summary>
+              {bi(
+                language,
+                'Основные источники резонанса',
+                'Main resonance contributors',
+              )}
+            </summary>
+            {labResonance(portals).contributors.map((p) => (
+              <p key={p.id}>
+                {p.name}: {p.value.toFixed(1)}
+              </p>
+            ))}
+          </details>
           <div className="ops-panel__split">
             <section className="priority-list">
               <h3>{language === 'ru' ? 'В первую очередь' : 'Priority queue'}</h3>
@@ -91,7 +129,7 @@ export function SystemReportPanel({
                   <button
                     className={
                       'priority-row' +
-                      (index === 0 && calculateRisk(portal).score >= 50
+                      (index === 0 && effectiveRisk(portal, portals).score >= 50
                         ? ' priority-row--urgent'
                         : '')
                     }
@@ -101,7 +139,7 @@ export function SystemReportPanel({
                     <span>
                       {String(index + 1).padStart(2, '0')} · {portal.name}
                     </span>
-                    <strong>{calculateRisk(portal).score}/100 ↗</strong>
+                    <strong>{effectiveRisk(portal, portals).score}/100 ↗</strong>
                   </button>
                 ))
               ) : (
@@ -145,17 +183,13 @@ export function SystemReportPanel({
                 </button>
               </div>
 
-              <div className="qa-box__action">
-                <div>
-                  <strong>{t(language, 'restoreDemo')}</strong>
-
-                  <p>{t(language, 'restoreDemoDescription')}</p>
-                </div>
-
-                <button type="button" className="ops-button" onClick={onRestoreDemo}>
-                  {t(language, 'restoreDemo')}
-                </button>
-              </div>
+              <p>
+                {bi(
+                  language,
+                  'Вернуть начальную смену: Настройки → Начать заново.',
+                  'Restore the initial shift: Settings → Restart shift.',
+                )}
+              </p>
             </div>
           </div>
         </div>

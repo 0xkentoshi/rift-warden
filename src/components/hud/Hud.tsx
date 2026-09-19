@@ -1,3 +1,5 @@
+import { labResonance } from '../../domain/simulation/network'
+import { bi, resonanceLabel } from '../../i18n/gameplay'
 import { calculateLabReport } from '../../domain/report/calculateLabReport'
 import { t, type Language } from '../../i18n/translations'
 import type { Portal } from '../../types/portal'
@@ -12,10 +14,12 @@ interface Props {
   onToggleMusic: () => void
   onOpenRegistry: () => void
   onOpenWorklog: () => void
+  onOpenHelp: () => void
   latestEventId?: string
 }
 export function Hud(p: Props) {
   const report = calculateLabReport(p.portals, [])
+  const resonance = labResonance(p.portals)
   return (
     <>
       <header className="hud">
@@ -23,7 +27,18 @@ export function Hud(p: Props) {
           <span className="hud__brand-main">
             <i>◇</i> RIFT // WARDEN
           </span>
-          <span className="hud__brand-sub">ARCANE PORTAL CONTROL SYSTEM</span>
+          <button
+            className="network-meter"
+            onClick={p.onOpenSystem}
+            title={bi(
+              p.language,
+              'Открыть вклад порталов в резонанс',
+              'Inspect portal resonance contributions',
+            )}
+          >
+            {bi(p.language, 'РЕЗОНАНС', 'RESONANCE')} {resonance.score}% ·{' '}
+            {resonanceLabel(p.language, resonance.level)}
+          </button>
         </div>
         <div
           className="hud__stats"
@@ -70,6 +85,14 @@ export function Hud(p: Props) {
               </button>
             ))}
           </div>
+          <button
+            className="hud__icon"
+            onClick={p.onOpenHelp}
+            aria-label={bi(p.language, 'КАК ИГРАТЬ', 'HOW TO PLAY')}
+            title={bi(p.language, 'КАК ИГРАТЬ', 'HOW TO PLAY')}
+          >
+            ?
+          </button>
           <button
             className="hud__icon"
             onClick={p.onOpenSettings}

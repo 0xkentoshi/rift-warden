@@ -9,7 +9,7 @@ export function getRiskLevel(score: number): RiskLevel {
 }
 
 export function calculateRisk(portal: Portal): RiskAssessment {
-  if (portal.status === 'closed') {
+  if (portal.status === 'closed' || portal.status === 'collapsed') {
     return {
       score: 0,
       level: 'LOW',

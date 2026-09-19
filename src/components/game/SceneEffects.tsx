@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { ambientLights, portalPositions, SCENE } from '../../data/labLayout'
-import { calculateRisk, getRiskLevel } from '../../domain/risk/calculateRisk'
+import { effectiveRisk } from '../../domain/simulation/network'
+import { getRiskLevel } from '../../domain/risk/calculateRisk'
 import { riskToVfx } from '../../game/effects'
 import type { Portal } from '../../types/portal'
 import type { AuditEvent } from '../../types/audit'
@@ -26,14 +27,20 @@ export function SceneEffects({
       proximity.current = { id: nearby, since: performance.now() }
     const states = Object.entries(portalPositions).map(([id, placement]) => {
       const portal = portals.find((p) => p.id === id)
-      const risk = portal ? calculateRisk(portal) : null
+      const risk = portal ? effectiveRisk(portal, portals) : null
       return {
         id,
         creatures: portal?.creatures ?? 0,
         placement,
-        closed: !portal || portal.status === 'closed',
+        closed: !portal || portal.status === 'closed' || portal.status === 'collapsed',
+        status: portal?.status ?? 'closed',
+        remaining: portal?.collapseMinutes ?? 0,
+        transitionMs: portal?.collapseTransitionMs ?? 0,
         color: risk?.level === 'CRITICAL' ? '#ff383c' : placement.color,
-        fx: riskToVfx(risk?.level ?? 'LOW', portal?.status ?? 'closed'),
+        fx: riskToVfx(
+          portal && portal.collapseMinutes <= 0.5 ? 'CRITICAL' : (risk?.level ?? 'LOW'),
+          portal?.status ?? 'closed',
+        ),
       }
     })
     let frame = 0
@@ -262,7 +269,7 @@ export function SceneEffects({
               ctx.fillRect(x, y + i * 8, 3, 3)
             }
             creature(ctx, x, y, '#a3fff1')
-          } else {
+          } else if (lastAction.action === 'mark-uncertain') {
             pixelRing(
               ctx,
               p.core.x,
@@ -290,6 +297,74 @@ export function SceneEffects({
             ctx.fillStyle = '#ffe3db'
             ctx.font = 'bold 26px monospace'
             ctx.fillText('!', p.core.x - 7, p.core.y - p.radius.y - 16)
+          }
+          ctx.restore()
+        }
+        // Lifecycle overlays stay inside / immediately around the existing aperture.
+        if (state.status === 'quarantined') {
+          ctx.save()
+          ctx.globalAlpha = 0.8
+          ctx.fillStyle = '#a4c5b8'
+          for (let i = -1; i <= 1; i++)
+            ctx.fillRect(
+              p.core.x + i * 12 - 2,
+              p.core.y - p.radius.y * 0.7,
+              4,
+              p.radius.y * 1.4,
+            )
+          ctx.fillRect(p.core.x - p.radius.x * 0.7, p.core.y - 2, p.radius.x * 1.4, 4)
+          ctx.restore()
+        }
+        if (state.status === 'collapsing') {
+          const progress = 1 - state.transitionMs / 1500
+          ctx.save()
+          ctx.globalAlpha = 0.9
+          pixelRing(
+            ctx,
+            p.core.x,
+            p.core.y,
+            35 + progress * 100,
+            50 + progress * 75,
+            '#ffc8ae',
+          )
+          ctx.fillStyle = '#ffe8d7'
+          ctx.fillRect(p.core.x - 4, p.core.y - p.radius.y, 8, p.radius.y * 2)
+          ctx.restore()
+        }
+        if (!closed && state.status !== 'collapsing' && state.remaining <= 3 / 60) {
+          ctx.save()
+          ctx.globalAlpha = motion.matches
+            ? 0.6
+            : 0.3 + 0.5 * Math.abs(Math.sin(time * 12))
+          ctx.strokeStyle = '#ffe6bb'
+          ctx.lineWidth = 4
+          ctx.strokeRect(
+            p.core.x - p.radius.x - 8,
+            p.core.y - p.radius.y - 8,
+            p.radius.x * 2 + 16,
+            p.radius.y * 2 + 16,
+          )
+          ctx.restore()
+        }
+        if (!closed && state.status !== 'collapsing' && state.remaining <= 0.5) {
+          ctx.save()
+          ctx.globalAlpha = 1
+          ctx.fillStyle = state.remaining <= 10 / 60 ? '#ff9b86' : '#f3d18b'
+          ctx.font = 'bold 20px monospace'
+          ctx.fillText(
+            String(Math.ceil(state.remaining * 60)) + 's',
+            p.core.x - 16,
+            p.core.y - p.radius.y - 18,
+          )
+          ctx.restore()
+        }
+        if (state.status === 'collapsed') {
+          ctx.save()
+          ctx.globalAlpha = 0.6
+          ctx.fillStyle = '#858491'
+          for (let i = -2; i <= 2; i++) {
+            ctx.fillRect(p.core.x + i * 5, p.core.y + i * 6, 5, 5)
+            ctx.fillRect(p.core.x - i * 5, p.core.y + i * 6, 5, 5)
           }
           ctx.restore()
         }
