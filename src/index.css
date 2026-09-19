@@ -594,7 +594,7 @@ kbd {
     padding-left: 0;
   }
 }
-@media (max-width: 960px) {
+@media (max-width: 1150px) {
   .hud {
     flex-wrap: wrap;
     min-height: 116px;

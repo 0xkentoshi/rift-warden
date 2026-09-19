@@ -553,6 +553,35 @@ h3 {
     min-height: 78px;
   }
 }
+@media (max-width: 360px) {
+  .hud__brand-main {
+    font-size: 16px;
+  }
+  .hud__nav button {
+    font-size: 12px;
+    padding: 8px 6px;
+  }
+  .hud__languages {
+    margin: 0;
+  }
+  .hud__nav .hud__icon {
+    width: 34px;
+    padding: 4px 6px;
+  }
+  .hud__stat span {
+    font-size: 10px;
+    letter-spacing: 0;
+  }
+  .lab-tools {
+    flex-wrap: wrap;
+  }
+  .lab-tools button {
+    flex: 0 0 100%;
+  }
+  .mobile-portals {
+    margin-top: calc(164px + 100vw * 941 / 1672 + 114px);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .metric__bar span::after,
   .risk-console__bar span::after,
