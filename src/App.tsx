@@ -55,6 +55,7 @@ function App() {
   const [onboardingSeen, setOnboardingSeen] = useState(
     () => readPreference('rift-warden-onboarding-seen') === 'yes',
   )
+  const [nearbyPortalId, setNearbyPortalId] = useState<string | null>(null)
   const [selectedPortalId, setSelectedPortalId] = useState<string | null>(null)
   const [activePanel, setActivePanel] = useState<ActivePanel>(() =>
     readPreference('rift-warden-onboarding-seen') === 'yes' ? null : 'help',
@@ -65,6 +66,7 @@ function App() {
   )
   const [lastAction, setLastAction] = useState<AuditEvent | null>(null)
   const [resetRequested, setResetRequested] = useState(false)
+  const [timeScale, setTimeScale] = useState(1)
   const [sceneEpoch, setSceneEpoch] = useState(0)
   const [hidden, setHidden] = useState(() => document.hidden)
   const actionLock = useRef(0),
@@ -74,7 +76,11 @@ function App() {
   const ended = game.phase === 'GAME_OVER' || game.phase === 'SHIFT_COMPLETE'
   const blocking =
     selectedPortal !== null || activePanel !== null || resetRequested || ended
-  const phase: GamePhase = ended ? game.phase : blocking || hidden ? 'PAUSED' : 'RUNNING'
+  const phase: GamePhase = ended
+    ? game.phase
+    : activePanel !== null || resetRequested || hidden
+      ? 'PAUSED'
+      : 'RUNNING'
   const report = useMemo(() => calculateLabReport(portals, events), [portals, events])
   const updateGame = (next: GameState) => {
     snapshot.current = next
@@ -83,7 +89,7 @@ function App() {
     if (newest && newest.id !== game.events.at(-1)?.id) setLastAction(newest)
   }
   useSimulationClock(phase, (elapsed) =>
-    updateGame(advanceSimulation(snapshot.current, elapsed)),
+    updateGame(advanceSimulation(snapshot.current, elapsed, Date.now(), timeScale)),
   )
   useEffect(() => {
     saveLabState(portals, events, game)
@@ -147,7 +153,12 @@ function App() {
   }
   const handleAction = (action: PortalAction, confirmed = false): ActionResult => {
     const current = snapshot.current.portals.find((p) => p.id === selectedPortalId)
-    if (!current || ended || performance.now() < actionLock.current)
+    if (
+      !current ||
+      current.id !== nearbyPortalId ||
+      ended ||
+      performance.now() < actionLock.current
+    )
       return { kind: 'busy' }
     const result = performAction(current, action, confirmed, snapshot.current.portals)
     if (!('event' in result)) return result
@@ -174,6 +185,7 @@ function App() {
     setSelectedPortalId(null)
     setActivePanel(null)
     setResetRequested(false)
+    setTimeScale(1)
     actionLock.current = 0
     setSceneEpoch((n) => n + 1)
   }
@@ -221,10 +233,14 @@ function App() {
         portals={portals}
         lastAction={lastAction}
         interactionLocked={blocking}
+        movementLocked={activePanel !== null || resetRequested || ended}
+        onNearbyChange={setNearbyPortalId}
         language={language}
         onSelectPortal={openPortal}
       >
         <Hud
+          timeScale={timeScale}
+          onTimeScaleChange={setTimeScale}
           portals={portals}
           language={language}
           onLanguageChange={setLanguage}
@@ -248,6 +264,7 @@ function App() {
         <PortalControlPanel
           key={selectedPortal.id}
           portal={selectedPortal}
+          canInteract={selectedPortal.id === nearbyPortalId}
           network={portals}
           events={events.filter((e) => e.portalId === selectedPortal.id)}
           language={language}
@@ -270,7 +287,6 @@ function App() {
         <SystemReportPanel
           report={report}
           portals={portals}
-          onSelectPortal={openPortal}
           language={language}
           onClose={() => setActivePanel(null)}
           onLoadEmptyScenario={empty}
@@ -291,7 +307,6 @@ function App() {
         <PortalRegistry
           portals={portals}
           language={language}
-          onSelect={openPortal}
           onClose={() => setActivePanel(null)}
         />
       )}

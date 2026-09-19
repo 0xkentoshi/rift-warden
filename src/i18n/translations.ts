@@ -14,7 +14,7 @@ const translations = {
     system: 'SYSTEM',
     move: 'MOVE',
     interact: 'INTERACT',
-    clickInspect: 'CLICK INSPECT',
+    clickInspect: 'CLICK TO INSPECT',
     inspect: 'INSPECT',
     openTerminal: 'OPEN',
     noActivePortals: 'NO ACTIVE PORTALS',
@@ -258,6 +258,10 @@ export function actionReason(
     collapseExpired: {
       en: 'The collapse window has expired. Close and secure the portal; deployment and stabilization are unavailable.',
       ru: 'Окно до схлопывания истекло. Закройте и обезопасьте портал; наблюдение и стабилизация недоступны.',
+    },
+    activeObserverClosure: {
+      en: 'Observer is still inside. Force closure endangers the observer and doubles containment damage.',
+      ru: 'Наблюдатель ещё внутри. Принудительное закрытие угрожает ему и удваивает повреждение контура.',
     },
     alreadyClosed: {
       en: 'This portal is already closed.',

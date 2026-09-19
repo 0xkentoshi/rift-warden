@@ -1,5 +1,6 @@
 import type { Portal } from '../../types/portal'
 import type { AuditEvent, SystemAction } from '../../types/audit'
+import { driftStability } from './drift'
 import { initialPortals } from '../../data/portals'
 import {
   effectiveRisk,
@@ -107,6 +108,7 @@ export function advanceSimulation(
   state: GameState,
   deltaMs: number,
   now = Date.now(),
+  timeScale = 1,
 ): GameState {
   if (state.phase !== 'RUNNING' || !Number.isFinite(deltaMs) || deltaMs <= 0) return state
   let next: GameState = {
@@ -114,7 +116,7 @@ export function advanceSimulation(
     portals: state.portals.map((p) => ({ ...p })),
     events: [...state.events],
   }
-  let remaining = deltaMs
+  let remaining = deltaMs * timeScale
   // Advance between domain deadlines, not animation frames. Large steps and small
   // steps encounter the same ordered collapse/shock boundaries.
   while (remaining > 0 && next.phase === 'RUNNING') {
@@ -134,6 +136,7 @@ export function advanceSimulation(
     next.portals = next.portals.map((p) => ({
       ...p,
       cooldownMs: Math.max(0, p.cooldownMs - step),
+      stability: driftStability(p, step),
       collapseMinutes: isLive(p)
         ? Math.max(
             0,

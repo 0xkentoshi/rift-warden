@@ -1,9 +1,12 @@
-import { labResonance } from '../../domain/simulation/network'
+import { TIME_SCALES } from '../../domain/simulation/drift'
+import { labResonance, containmentDamage } from '../../domain/simulation/network'
 import { bi, resonanceLabel } from '../../i18n/gameplay'
 import { calculateLabReport } from '../../domain/report/calculateLabReport'
 import { t, type Language } from '../../i18n/translations'
 import type { Portal } from '../../types/portal'
 interface Props {
+  timeScale: number
+  onTimeScaleChange: (value: number) => void
   portals: Portal[]
   language: Language
   musicEnabled: boolean
@@ -38,6 +41,8 @@ export function Hud(p: Props) {
           >
             {bi(p.language, 'РЕЗОНАНС', 'RESONANCE')} {resonance.score}% ·{' '}
             {resonanceLabel(p.language, resonance.level)}
+            {containmentDamage(p.portals) > 0 &&
+              ' · Scar +' + containmentDamage(p.portals)}
           </button>
         </div>
         <div
@@ -66,6 +71,20 @@ export function Hud(p: Props) {
             p.language === 'ru' ? 'Инструменты лаборатории' : 'Laboratory tools'
           }
         >
+          <label className="time-scale">
+            {bi(p.language, 'Темп', 'Speed')}
+            <select
+              aria-label={bi(p.language, 'Скорость симуляции', 'Simulation speed')}
+              value={p.timeScale}
+              onChange={(e) => p.onTimeScaleChange(Number(e.target.value))}
+            >
+              {TIME_SCALES.map((v) => (
+                <option key={v} value={v}>
+                  {v}×
+                </option>
+              ))}
+            </select>
+          </label>
           <button onClick={p.onOpenEventLog}>
             {t(p.language, 'eventLog')}
             {p.latestEventId && (

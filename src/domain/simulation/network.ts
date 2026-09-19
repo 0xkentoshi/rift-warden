@@ -13,6 +13,8 @@ export function contribution(p: Portal): number {
   const raw = weights[calculateRisk(p).level] * (1 + (p.difficulty - 1) * 0.08)
   return raw * (p.status === 'quarantined' ? 0.15 : 1)
 }
+export const containmentDamage = (portals: Portal[]) =>
+  portals.reduce((sum, p) => sum + (p.riftScar ?? 0), 0)
 export function labResonance(portals: Portal[]) {
   const contributors = portals
     .map((p) => ({ id: p.id, name: p.name, value: contribution(p) }))
@@ -20,7 +22,8 @@ export function labResonance(portals: Portal[]) {
     .sort((a, b) => b.value - a.value || a.id.localeCompare(b.id))
   const score = Math.min(
     100,
-    Math.round(contributors.reduce((s, p) => s + p.value, 0) * 1.2),
+    Math.round(contributors.reduce((s, p) => s + p.value, 0) * 1.2) +
+      containmentDamage(portals),
   )
   const level =
     score >= 70

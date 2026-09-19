@@ -28,6 +28,8 @@ export interface Portal {
   creatures: number
   status: PortalStatus
 
+  riftScar?: number
+  observerActive?: boolean
   uncertain: boolean
   intel: number
   observerCount: number

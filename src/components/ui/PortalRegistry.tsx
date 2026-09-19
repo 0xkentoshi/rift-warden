@@ -9,12 +9,10 @@ import type { CSSProperties } from 'react'
 export function PortalRegistry({
   portals,
   language,
-  onSelect,
   onClose,
 }: {
   portals: Portal[]
   language: Language
-  onSelect: (id: string) => void
   onClose: () => void
 }) {
   const [filter, setFilter] = useState('all')
@@ -83,13 +81,11 @@ export function PortalRegistry({
                       <span className="registry-seal" aria-hidden="true">
                         {String(index + 1).padStart(2, '0')}
                       </span>
-                      <button className="text-button" onClick={() => onSelect(portal.id)}>
-                        {portal.name} ↗
-                      </button>
+                      <span className="text-button">{portal.name}</span>
                       <small>{portal.destination}</small>
                     </td>
                     <td>{portal.energy}%</td>
-                    <td>{portal.stability}%</td>
+                    <td>{portal.stability.toFixed(1)}%</td>
                     <td>{countdown(portal)}</td>
                     <td>{portal.creatures}</td>
                     <td>{portal.intel}%</td>
@@ -124,8 +120,8 @@ export function PortalRegistry({
       )}
       <p className="subtle-copy">
         {ru
-          ? 'Время — живой обратный отсчёт. Во всех окнах оно на паузе. Изоляция замедляет его в 4 раза.'
-          : 'Time is a live countdown. Every modal pauses it. Quarantine slows it fourfold.'}
+          ? 'Время — живой обратный отсчёт. Реестр на паузе, только мониторинг. Действия: подойти к порталу и нажать E. Изоляция замедляет его в 4 раза.'
+          : 'Time is a live countdown. Registry pauses gameplay and is read-only. Approach a portal and press E for actions. Quarantine slows it fourfold.'}
       </p>
     </Modal>
   )

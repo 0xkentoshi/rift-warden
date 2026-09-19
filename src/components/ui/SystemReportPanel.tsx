@@ -1,6 +1,10 @@
 import type { LabReport } from '../../domain/report/calculateLabReport'
 import { priorityPortals } from '../../domain/report/recommendation'
-import { effectiveRisk, labResonance } from '../../domain/simulation/network'
+import {
+  effectiveRisk,
+  labResonance,
+  containmentDamage,
+} from '../../domain/simulation/network'
 import { bi } from '../../i18n/gameplay'
 import type { Portal } from '../../types/portal'
 import { actionLabel, t, type Language } from '../../i18n/translations'
@@ -9,7 +13,6 @@ import type { PortalAction } from '../../domain/validation/validateAction'
 interface SystemReportPanelProps {
   report: LabReport
   portals: Portal[]
-  onSelectPortal: (id: string) => void
   language: Language
   onClose: () => void
   onLoadEmptyScenario: () => void
@@ -27,7 +30,6 @@ const ACTIONS: PortalAction[] = [
 export function SystemReportPanel({
   report,
   portals,
-  onSelectPortal,
   language,
   onClose,
   onLoadEmptyScenario,
@@ -93,6 +95,10 @@ export function SystemReportPanel({
             {(
               [
                 [bi(language, 'Резонанс', 'Resonance'), report.resonance],
+                [
+                  bi(language, 'Повреждение контура', 'Containment damage'),
+                  containmentDamage(portals),
+                ],
                 [bi(language, 'Исследовано', 'Researched'), report.researched],
                 [bi(language, 'Нерешённые', 'Unresolved'), report.unresolved],
                 [bi(language, 'Изолировано', 'Quarantined'), report.quarantined],
@@ -126,7 +132,7 @@ export function SystemReportPanel({
               <h3>{language === 'ru' ? 'В первую очередь' : 'Priority queue'}</h3>
               {priorityPortals(portals).length ? (
                 priorityPortals(portals).map((portal, index) => (
-                  <button
+                  <div
                     className={
                       'priority-row' +
                       (index === 0 && effectiveRisk(portal, portals).score >= 50
@@ -134,13 +140,12 @@ export function SystemReportPanel({
                         : '')
                     }
                     key={portal.id}
-                    onClick={() => onSelectPortal(portal.id)}
                   >
                     <span>
                       {String(index + 1).padStart(2, '0')} · {portal.name}
                     </span>
                     <strong>{effectiveRisk(portal, portals).score}/100 ↗</strong>
-                  </button>
+                  </div>
                 ))
               ) : (
                 <p>

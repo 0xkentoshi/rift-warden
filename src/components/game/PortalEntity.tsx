@@ -5,18 +5,18 @@ import { t, riskLevelLabel, type Language } from '../../i18n/translations'
 import type { Portal } from '../../types/portal'
 
 interface Props {
+  onInspect: () => void
   portal: Portal
   network?: Portal[]
   nearby: boolean
   language: Language
-  onOpen: () => void
 }
 export function PortalEntity({
   portal,
   network = [portal],
   nearby,
   language,
-  onOpen,
+  onInspect,
 }: Props) {
   const p = portalPositions[portal.id]
   const risk = effectiveRisk(portal, network)
@@ -24,6 +24,8 @@ export function PortalEntity({
   return (
     <>
       <button
+        type="button"
+        onClick={onInspect}
         className={'portal-hotspot' + (nearby ? ' is-nearby' : '')}
         style={{
           left: p.collider.x,
@@ -31,11 +33,10 @@ export function PortalEntity({
           width: p.collider.width,
           height: p.collider.height,
         }}
-        aria-label={t(language, 'inspect') + ' ' + portal.name}
-        onClick={onOpen}
+        aria-label={portal.name}
       />
       {nearby && (
-        <button
+        <div
           className={
             'portal-label risk-' +
             risk.level.toLowerCase() +
@@ -43,12 +44,11 @@ export function PortalEntity({
             (nearby ? ' is-nearby' : '')
           }
           style={{ left: p.label.x, top: p.label.y }}
-          onClick={onOpen}
         >
           <strong>{portal.name}</strong>
           <small>
-            {t(language, 'stability')}: {portal.stability}% · {t(language, 'creatures')}:{' '}
-            {portal.creatures}
+            {t(language, 'stability')}: {portal.stability.toFixed(1)}% ·{' '}
+            {t(language, 'creatures')}: {portal.creatures}
           </small>
           <span>
             {portal.status !== 'open'
@@ -61,7 +61,7 @@ export function PortalEntity({
           <small>
             <kbd>E</kbd> {t(language, 'inspect')}
           </small>
-        </button>
+        </div>
       )}
     </>
   )

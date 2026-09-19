@@ -26,6 +26,7 @@ export type ActionReasonCode =
   | 'cooldown'
   | 'unsafeClosure'
   | 'portalLost'
+  | 'activeObserverClosure'
 export interface ActionValidation {
   allowed: boolean
   requiresConfirmation: boolean
@@ -65,6 +66,12 @@ export function validateAction(
     return deny('cooldown')
   if (action === 'reactivate' && portal.energy + 6 + portal.difficulty > 100)
     return deny('energyCapacity')
+  if (action === 'close' && portal.observerActive)
+    return {
+      allowed: true,
+      requiresConfirmation: true,
+      reasonCode: 'activeObserverClosure',
+    }
   if (action === 'close' && portal.creatures > 0)
     return { allowed: true, requiresConfirmation: true, reasonCode: 'creaturesInside' }
   if (action === 'close' && portal.intel < 100)

@@ -79,6 +79,8 @@ function isPortal(v: unknown): v is Portal {
   if (!basePortal(v)) return false
   return (
     ['open', 'closed', 'quarantined', 'collapsing', 'collapsed'].includes(v.status) &&
+    (v.riftScar === undefined || number(v.riftScar, 100)) &&
+    (v.observerActive === undefined || typeof v.observerActive === 'boolean') &&
     number(v.intel, 100) &&
     integer(v.observerCount, 10000) &&
     integer(v.difficulty, 6) &&
@@ -116,6 +118,7 @@ const reasons = [
   'cooldown',
   'unsafeClosure',
   'portalLost',
+  'activeObserverClosure',
 ]
 function isEvent(v: unknown): v is AuditEvent {
   return (

@@ -15,6 +15,8 @@ import { readPreference, writePreference } from '../../storage/labStorage'
 
 interface Props {
   portals: Portal[]
+  movementLocked?: boolean
+  onNearbyChange?: (id: string | null) => void
   interactionLocked: boolean
   language: Language
   onSelectPortal: (id: string) => void
@@ -24,6 +26,8 @@ interface Props {
 export function Laboratory({
   portals,
   interactionLocked,
+  movementLocked = interactionLocked,
+  onNearbyChange,
   language,
   onSelectPortal,
   children,
@@ -44,11 +48,14 @@ export function Laboratory({
   const [transform, setTransform] = useState(() =>
     viewportTransform(window.innerWidth, window.innerHeight),
   )
-  const movement = useKeyboardMovement(!interactionLocked)
+  const movement = useKeyboardMovement(!movementLocked)
   const nearby = nearestPortal(
     movement.position,
     portals.map((p) => p.id),
   )
+  useEffect(() => {
+    onNearbyChange?.(nearby)
+  }, [nearby, onNearbyChange])
   const debug = new URLSearchParams(window.location.search).has('debug')
   useEffect(() => {
     const element = viewport.current
@@ -113,8 +120,8 @@ export function Laboratory({
             portal={portal}
             network={portals}
             nearby={nearby === portal.id}
+            onInspect={() => inspect(portal.id)}
             language={language}
-            onOpen={() => inspect(portal.id)}
           />
         ))}
         <Character
@@ -190,8 +197,8 @@ export function Laboratory({
               {t(language, 'inspect')}
               <br />
               {language === 'ru'
-                ? 'Или нажми на арку / открой реестр.'
-                : 'Or click an arch / open the registry.'}
+                ? 'Действия: подойди к порталу и нажми E. Реестр — мониторинг.'
+                : 'Actions: approach a portal and press E. Registry is monitoring only.'}
             </small>
           </div>
         </aside>
@@ -204,14 +211,14 @@ export function Laboratory({
       >
         <p>
           {language === 'ru'
-            ? 'Выберите портал, чтобы оценить риск и принять решение.'
-            : 'Select a portal to assess its risk and take action.'}
+            ? 'Мониторинг. Для действий подойдите к порталу и нажмите E.'
+            : 'Monitoring only. Approach a portal and press E to act.'}
         </p>
         <div>
           {portals.map((portal) => {
             const risk = effectiveRisk(portal, portals)
             return (
-              <button key={portal.id} onClick={() => inspect(portal.id)}>
+              <article className="mobile-portal" key={portal.id}>
                 <strong>{portal.name}</strong>
                 <small>{portal.destination}</small>
                 <span className={'risk-text risk-text--' + risk.level.toLowerCase()}>
@@ -219,7 +226,7 @@ export function Laboratory({
                     ? statusLabel(language, portal.status)
                     : riskLevelLabel(language, risk.level) + ' · ' + risk.score}
                 </span>
-              </button>
+              </article>
             )
           })}
         </div>
@@ -239,10 +246,10 @@ export function Laboratory({
             : 'LABORATORY 06 · WARDEN ON DUTY'}
         </span>
         {nearby && !interactionLocked ? (
-          <button className="interaction-prompt" onClick={() => inspect(nearby)}>
+          <span className="interaction-prompt">
             <kbd>E</kbd>
             {t(language, 'inspect')} {portals.find((p) => p.id === nearby)?.name}
-          </button>
+          </span>
         ) : (
           <span className="controls-hint">
             <kbd>WASD / ↑↓←→</kbd> {t(language, 'move')} <kbd>E</kbd>{' '}

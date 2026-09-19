@@ -150,3 +150,46 @@
 .registry-scroll {
   max-width: 100%;
 }
+
+.time-scale {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #d5c6a4;
+}
+.time-scale select {
+  background: #182e2a;
+  color: #efdfad;
+  border: 1px solid #87784e;
+  padding: 6px;
+  font: inherit;
+}
+.hud__nav {
+  flex-wrap: wrap;
+}
+.action-help {
+  display: grid;
+  gap: 10px;
+  border-left: 2px solid #967b4f;
+  padding-left: 12px;
+}
+.mobile-portal {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border: 2px solid #8d79517a;
+  background: #1f302f;
+  color: #f6ebdb;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.mobile-portal strong {
+  font-size: 18px;
+}
+.mobile-portal small {
+  color: #b2c6b6;
+}
+.portal-hotspot {
+  cursor: pointer;
+}

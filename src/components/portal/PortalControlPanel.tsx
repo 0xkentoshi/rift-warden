@@ -24,6 +24,7 @@ import {
 import { AnimatedRisk } from './AnimatedRisk'
 
 interface PortalControlPanelProps {
+  canInteract?: boolean
   portal: Portal
   network: Portal[]
   events: AuditEvent[]
@@ -35,6 +36,7 @@ interface PortalControlPanelProps {
 
 export function PortalControlPanel({
   portal,
+  canInteract = false,
   network,
   events,
   language,
@@ -105,7 +107,6 @@ export function PortalControlPanel({
   const [busy, setBusy] = useState<PortalAction | null>(null)
   const executionLatch = useRef(false)
   const unlockTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const previewSnapshot = useRef<Portal | null>(null)
   const messageKind =
     typeof feedback === 'object' && feedback?.status === 'success'
       ? 'success'
@@ -142,7 +143,7 @@ export function PortalControlPanel({
   ) as Record<PortalAction, ReturnType<typeof validateAction>>
 
   const execute = (action: PortalAction, confirmed = false) => {
-    if (executionLatch.current) return
+    if (!canInteract || executionLatch.current) return
     executionLatch.current = true
     setBusy(action)
     setPendingAction(null)
@@ -167,16 +168,10 @@ export function PortalControlPanel({
       execute(action)
       return
     }
-    previewSnapshot.current = portal
     setPendingAction(action)
   }
   const confirmPendingAction = () => {
-    if (!pendingAction || executionLatch.current) return
-    if (previewSnapshot.current !== portal) {
-      setPendingAction(null)
-      setFeedback('error')
-      return
-    }
+    if (!canInteract || !pendingAction || executionLatch.current) return
     execute(pendingAction, true)
   }
   const preview = pendingAction ? applyAction(portal, pendingAction, network) : null
@@ -253,7 +248,7 @@ export function PortalControlPanel({
 
             <Metric
               label={t(language, 'stability')}
-              value={`${portal.stability}%`}
+              value={`${portal.stability.toFixed(1)}%`}
               percentage={portal.stability}
             />
 
@@ -267,6 +262,15 @@ export function PortalControlPanel({
             />
           </div>
 
+          {portal.uncertain && (
+            <p className="pause-note">
+              {bi(
+                language,
+                'Осторожный режим: дрейф ×0,65; следующая разведка +25% Intel и −20% энергии.',
+                'Caution Protocol: drift ×0.65; next expedition +25% Intel and −20% energy.',
+              )}
+            </p>
+          )}
           <details className="intel-findings">
             <summary>
               {ru ? 'Данные экспедиций' : 'Expedition findings'} · {portal.intel}%
@@ -336,10 +340,23 @@ export function PortalControlPanel({
             </details>
           </div>
 
+          <p className="pause-note">
+            {canInteract
+              ? bi(
+                  language,
+                  'УПРАВЛЕНИЕ · портал в радиусе взаимодействия',
+                  'FULL CONTROL · portal within reach',
+                )
+              : bi(
+                  language,
+                  'ТОЛЬКО ОСМОТР · Подойдите к порталу для взаимодействия. WASD / стрелки доступны при открытой карточке.',
+                  'READ ONLY · APPROACH PORTAL TO INTERACT. WASD / arrows work while this panel is open.',
+                )}
+          </p>
           <div className="portal-panel__actions">
             {ACTIONS.map((action) => {
               const validation = validations[action]
-              const isBlocked = !validation.allowed
+              const isBlocked = !canInteract || !validation.allowed
 
               return (
                 <button
@@ -353,11 +370,11 @@ export function PortalControlPanel({
                     .filter(Boolean)
                     .join(' ')}
                   onClick={() => handleAction(action)}
-                  disabled={busy !== null}
+                  disabled={!canInteract || busy !== null}
                   aria-disabled={isBlocked || busy !== null}
                   aria-busy={busy === action}
                   title={
-                    validation.reasonCode
+                    canInteract && validation.reasonCode
                       ? actionReason(language, validation.reasonCode, portal.creatures)
                       : undefined
                   }
@@ -372,17 +389,19 @@ export function PortalControlPanel({
                         : actionLabel(language, action)}
                   </span>
 
-                  <small>
-                    {isBlocked && validation.reasonCode
-                      ? actionReason(language, validation.reasonCode, portal.creatures)
-                      : validation.requiresConfirmation
-                        ? t(language, 'warning')
-                        : portal.status === 'closed'
-                          ? t(language, 'offline')
-                          : ru
-                            ? 'ПРЕДПРОСМОТР →'
-                            : 'PREVIEW →'}
-                  </small>
+                  {canInteract && (
+                    <small>
+                      {isBlocked && validation.reasonCode
+                        ? actionReason(language, validation.reasonCode, portal.creatures)
+                        : validation.requiresConfirmation
+                          ? t(language, 'warning')
+                          : portal.status === 'closed'
+                            ? t(language, 'offline')
+                            : ru
+                              ? 'ПРЕДПРОСМОТР →'
+                              : 'PREVIEW →'}
+                    </small>
+                  )}
                 </button>
               )
             })}
@@ -413,7 +432,7 @@ export function PortalControlPanel({
             </div>
           )}
 
-          {pendingAction && preview && previewRisk && (
+          {canInteract && pendingAction && preview && previewRisk && (
             <div
               className="confirmation-box action-preview"
               role={pendingReason ? 'alert' : 'region'}

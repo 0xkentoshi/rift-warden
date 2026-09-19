@@ -6,8 +6,12 @@ import { createAuditEvent } from '../events/createAuditEvent'
 import type { AuditEvent } from '../../types/audit'
 
 export function closureKind(portal: Portal): 'safe' | 'forced' {
-  return portal.intel === 100 && portal.creatures === 0 ? 'safe' : 'forced'
+  return portal.intel === 100 && portal.creatures === 0 && !portal.observerActive
+    ? 'safe'
+    : 'forced'
 }
+export const closureDamage = (p: Portal) =>
+  closureKind(p) === 'safe' ? 0 : p.observerActive ? 12 : 6
 export function applyAction(
   portal: Portal,
   action: PortalAction,
@@ -37,6 +41,8 @@ export function applyAction(
       return {
         ...portal,
         status: 'closed',
+        riftScar: (portal.riftScar ?? 0) + closureDamage(portal),
+        observerActive: false,
         energy: 0,
         stability: 100,
         collapseMinutes: 0,

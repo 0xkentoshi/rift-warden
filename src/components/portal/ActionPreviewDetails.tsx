@@ -3,7 +3,7 @@ import type { Language } from '../../i18n/translations'
 import { riskLevelLabel } from '../../i18n/translations'
 import { bi, countdown, statusLabel } from '../../i18n/gameplay'
 import { effectiveRisk, labResonance } from '../../domain/simulation/network'
-import { closureKind } from '../../domain/actions/applyAction'
+import { closureKind, closureDamage } from '../../domain/actions/applyAction'
 import type { PortalAction } from '../../domain/validation/validateAction'
 export function ActionPreviewDetails({
   portal: p,
@@ -26,7 +26,11 @@ export function ActionPreviewDetails({
     [bi(l, 'Риск', 'Risk'), risk(before), risk(after)],
     ['Intel', p.intel + '%', n.intel + '%'],
     [bi(l, 'Энергия', 'Energy'), p.energy + '%', n.energy + '%'],
-    [bi(l, 'Стабильность', 'Stability'), p.stability + '%', n.stability + '%'],
+    [
+      bi(l, 'Стабильность', 'Stability'),
+      p.stability.toFixed(1) + '%',
+      n.stability.toFixed(1) + '%',
+    ],
     [bi(l, 'До схлопывания', 'Time to collapse'), countdown(p), countdown(n)],
     [bi(l, 'Статус', 'Status'), statusLabel(l, p.status), statusLabel(l, n.status)],
     [
@@ -46,6 +50,31 @@ export function ActionPreviewDetails({
               'Портал изучен не полностью; неизвестные аномалии или существа могут остаться внутри.',
               'This rift is not fully studied; unknown anomalies or occupants may remain inside.',
             )}
+        </p>
+      )}
+      {action === 'close' && closureDamage(p) > 0 && (
+        <p className="preview-warning">
+          {bi(l, 'Повреждение контура', 'Containment damage')}: +{closureDamage(p)}{' '}
+          {bi(
+            l,
+            'к резонансу до конца смены. Rift Scar.',
+            'resonance for this shift. Rift Scar.',
+          )}
+          {p.observerActive && (
+            <strong>
+              {bi(
+                l,
+                ' Наблюдатель ещё внутри: усиленный штраф.',
+                ' Observer still inside: increased penalty.',
+              )}
+            </strong>
+          )}
+          {p.creatures > 0 && (
+            <span>
+              {' '}
+              · {bi(l, 'Существ внутри', 'Occupants inside')}: {p.creatures}
+            </span>
+          )}
         </p>
       )}
       <dl className="preview-grid">
@@ -97,8 +126,8 @@ export function ActionPreviewDetails({
       <p className="subtle-copy">
         {bi(
           l,
-          'Это прогноз. До подтверждения ничего не изменяется; игровое время на паузе.',
-          'This is a preview. Nothing changes before confirmation; gameplay time is paused.',
+          'Живой прогноз: таймер и стабильность продолжают меняться. Подтверждение повторно проверит актуальные условия.',
+          'Live preview: countdown and stability keep changing. Confirmation revalidates the current conditions.',
         )}
       </p>
     </>

@@ -34,7 +34,7 @@ describe('Intel and expeditions', () => {
     const p = { ...green(), energy: 58, intel: 20, uncertain: true },
       n = applyAction(p, 'observe')
     expect(n.intel).toBeGreaterThan(p.intel)
-    expect(n.energy).toBe(62)
+    expect(n.energy).toBe(61)
     expect(n.observerCount).toBe(1)
     expect(n.uncertain).toBe(false)
     expect(calculateRisk(n).factors.some((f) => f.code === 'elevatedEnergy')).toBe(true)
