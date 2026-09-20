@@ -156,7 +156,10 @@ describe('operator workflows', () => {
     fireEvent.keyDown(window, { key: 'Escape', code: 'Escape' })
     fireEvent.click(screen.getByRole('button', { name: 'RU' }))
     fireEvent.click(screen.getByRole('button', { name: /AI WORKLOG/ }))
-    expect(screen.getByRole('dialog')).toHaveTextContent('Не подсчитывались')
+    expect(screen.getByRole('dialog')).toHaveTextContent('9 × 5-часовых лимитных окон')
+    expect(screen.getByRole('dialog')).toHaveTextContent(
+      'Суммарное количество токенов не подсчитывалось',
+    )
     expect(document.documentElement.lang).toBe('ru')
   })
   it('does not mutate a cancelled preview; confirms once despite double clicks and keyboard spam', () => {
