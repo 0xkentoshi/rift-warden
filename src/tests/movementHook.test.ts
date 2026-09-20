@@ -62,3 +62,39 @@ it('clears held input on blur and when a modal disables movement', () => {
   frame()
   expect(result.current.position).toEqual(locked)
 })
+it.each([0.5, 1, 1.5, 2, 5])('scales character speed at %s×', (scale) => {
+  const { result } = renderHook(() => useKeyboardMovement(true, scale))
+  const start = result.current.position.x
+  fireEvent.keyDown(window, { code: 'KeyD' })
+  frame()
+  expect(result.current.position.x - start).toBeCloseTo(170 * scale * 0.016)
+})
+it.each(['select', 'button'])(
+  'clears held input on %s interaction and resumes after leaving it',
+  (tag) => {
+    const control = document.createElement(tag)
+    document.body.appendChild(control)
+    const { result } = renderHook(() => useKeyboardMovement(true))
+    fireEvent.keyDown(window, { code: 'KeyD' })
+    frame()
+    expect(result.current.moving).toBe(true)
+    fireEvent.pointerDown(control)
+    expect(result.current.moving).toBe(false)
+    const stopped = result.current.position
+    act(() => control.focus())
+    fireEvent.keyDown(control, { code: 'KeyD' })
+    frame()
+    expect(result.current.position).toEqual(stopped)
+    act(() => control.blur())
+    fireEvent.keyDown(window, { code: 'KeyD' })
+    frame()
+    expect(result.current.position.x).toBeGreaterThan(stopped.x)
+    fireEvent.mouseDown(control)
+    expect(result.current.moving).toBe(false)
+    fireEvent.keyDown(window, { code: 'KeyD' })
+    frame()
+    act(() => control.focus())
+    expect(result.current.moving).toBe(false)
+    control.remove()
+  },
+)

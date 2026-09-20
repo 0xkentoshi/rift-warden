@@ -2,12 +2,6 @@ import type { Language } from '../../i18n/translations'
 import { Modal } from './Modal'
 const stages = [
   [
-    'Gameplay Systems Redesign',
-    'Задал исследование с ценой, карантин, таймер, каскад, понятный restart и приоритет исходного ТЗ. Попросил улучшать рабочую основу без переделки ассетов.',
-    'Расширил доменную модель и единые preview/commit, добавил Intel, давление сети, фазы смены и монотонный таймер. Проверил баланс и паузу тестами; UI и сценарии — отдельно в браузере.',
-    'Не ломать ТЗ: понятная формула, быстрый reviewer path, честный журнал и Worklog. Поверх принятого фона — законченный цикл исследования и сдерживания.',
-  ],
-  [
     'Идея и ТЗ',
     'Выбрал пространственную лабораторию и утвердил художественный референс. Передал исходное ТЗ.',
     'Сопоставил исходный код с требованиями: нашёл отсутствие Worklog, рекомендаций и истории в карточке.',
@@ -20,9 +14,15 @@ const stages = [
     'Не ломать risk engine; единая система координат для всей сцены.',
   ],
   [
-    'Арт и интерфейс',
+    'Арт',
     'Выбрал уютную pixel-art лабораторию, отклонил овал, растяжение и статичную сцену.',
-    'ImageGen очистил фон и создал спрайты. Codex собрал HUD, живые подписи, Canvas-эффекты и реестр.',
+    'ImageGen очистил фон и создал спрайты.',
+    'Сохранить композицию; убрать впечатываемые подписи и персонажа, сделать живые порталы.',
+  ],
+  [
+    'Интерфейс',
+    'Выбрал уютную pixel-art лабораторию, отклонил овал, растяжение и статичную сцену.',
+    'Codex собрал HUD, живые подписи, Canvas-эффекты и реестр поверх принятого арта.',
     'Сохранить композицию; убрать впечатываемые подписи и персонажа, сделать живые порталы.',
   ],
   [
@@ -55,14 +55,26 @@ const stages = [
     'Убрал значки глаз, заменил Pixelify Sans парой Press Start 2P для заголовков и PT Mono для текста/цифр. ImageGen создал оригинального лаборанта; Codex выровнял кадры ходьбы по подошвам и проверил RU/EN и узкий экран.',
     'Сохранить стиль, но сделать буквы и цифры читаемыми; маленький пиксельный работник лаборатории. Фон зафиксирован.',
   ],
+  [
+    'GAMEPLAY SYSTEMS REDESIGN',
+    'Определил направление полноценного gameplay: Intel/Observer risk-reward, Network Resonance, Quarantine, live countdown, Safe/Force Close, Collapse/Cascade, Restart Shift и Pause system.',
+    'Расширил domain model и gameplay runtime; добавил Intel, network pressure, states, timer model, persistence и tests.',
+    'Не ломать ТЗ: понятная формула, быстрый reviewer path, честный журнал и Worklog. Поверх принятого фона — законченный цикл исследования и сдерживания.',
+  ],
+  [
+    'BALANCE & LIVE SIMULATION',
+    'Во время ручного тестирования обнаружил Mark Uncertain без положительного эффекта, слишком выгодный Force Close, статичную Stability, медленную проверку и возможность думать над действиями на паузе. Определил исправления: Caution Protocol, Rift Scars, Stability drift, Time Scale и действия без pause.',
+    'Реализовал эти механики и targeted regression tests.',
+    'Добавить пользу и цену действий, живой дрейф и Time Scale; не ставить действия портала на паузу.',
+  ],
+  [
+    'REMOTE INSPECTION & FINAL UX',
+    'Попросил смотреть характеристики кликом из любой точки, разрешать действия только рядом, сохранить физическое перемещение и актуализировать обучение. Сообщил о финальных input/layout проблемах.',
+    'Реализовал read-only remote inspection, proximity-gated actions, обновил How to Play и финальные UX fixes.',
+    'Удалённый осмотр, действия рядом; исправить залипание движения и layout без изменения domain logic.',
+  ],
 ]
 const stagesEn = [
-  [
-    'Gameplay Systems Redesign',
-    'Specified paid research, quarantine, a live countdown, cascade, coherent restart and preservation of the original assignment. Requested improvements to the working foundation without regenerating assets.',
-    'Extended the domain and shared preview/commit, implemented Intel, network pressure, shift phases and a monotonic clock. Checked balance and pause with tests; reviewed UI workflows separately in the browser.',
-    'Preserve the brief: explained risk, a quick review path, honest audit and worklog. Build a complete research/containment loop over the approved background.',
-  ],
   [
     'Idea and brief',
     'Chose the spatial laboratory, approved the art reference and supplied the original assignment.',
@@ -76,9 +88,15 @@ const stagesEn = [
     'One scene coordinate system; do not break the risk engine.',
   ],
   [
-    'Art and interface',
+    'Art',
     'Selected the cozy pixel-art direction and rejected distortion, the center oval and a static scene.',
-    'ImageGen cleaned the background and created sprites. Codex implemented HUD, labels, Canvas effects and registry.',
+    'ImageGen cleaned the background and created sprites.',
+    'Keep the composition; remove baked UI and character; make portals live.',
+  ],
+  [
+    'Interface',
+    'Selected the cozy pixel-art direction and rejected distortion, the center oval and a static scene.',
+    'Codex implemented HUD, live labels, Canvas effects and registry over the approved art.',
     'Keep the composition; remove baked UI and character; make portals live.',
   ],
   [
@@ -110,6 +128,24 @@ const stagesEn = [
     'Rejected the hard-to-read font and requested removal of eye badges and an original small lab worker inspired by a new reference.',
     'Removed the eye badges and replaced Pixelify Sans with Press Start 2P headings and PT Mono copy/numbers. ImageGen created the original worker; Codex aligned walk frames at the soles and checked RU/EN and narrow layouts.',
     'Keep the style but make letters and numbers readable; use a small pixel lab worker. Keep the background locked.',
+  ],
+  [
+    'GAMEPLAY SYSTEMS REDESIGN',
+    'Defined Intel/Observer risk–reward, Network Resonance, Quarantine, live countdown, Safe/Force Close, Collapse/Cascade, Restart Shift and Pause system.',
+    'Extended the domain model and gameplay runtime; added Intel, network pressure, states, timer model, persistence and tests.',
+    'Preserve the brief: explained risk, a quick review path, honest audit and worklog. Build a complete research/containment loop over the approved background.',
+  ],
+  [
+    'BALANCE & LIVE SIMULATION',
+    'During manual testing, found Mark Uncertain lacked a benefit, Force Close was too rewarding, Stability was static, review was slow and paused actions allowed unlimited thinking. Specified Caution Protocol, Rift Scars, Stability drift, Time Scale and live portal actions.',
+    'Implemented these mechanics and targeted regression tests.',
+    'Add benefits and costs, live drift and Time Scale; do not pause portal actions.',
+  ],
+  [
+    'REMOTE INSPECTION & FINAL UX',
+    'Requested click-to-inspect from anywhere, actions only nearby, movement as gameplay and concise onboarding. Reported final input and layout problems.',
+    'Implemented read-only remote inspection, proximity-gated actions, updated How to Play and final UX fixes.',
+    'Remote inspection, nearby control; fix stuck input and layout without changing domain logic.',
   ],
 ]
 export function AIWorklog({

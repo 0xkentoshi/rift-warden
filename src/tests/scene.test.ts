@@ -245,3 +245,19 @@ describe('state-driven presentation', () => {
     expect(priorityPortals([])).toEqual([])
   })
 })
+it('allows interaction in the enlarged approach radius but not remotely', () => {
+  const radii = [58, 50, 58, 56, 56, 44]
+  Object.entries(portalPositions).forEach(([id, placement], i) => {
+    expect(placement.interactionRadius).toBe(radii[i])
+    expect(
+      nearestPortal({ x: placement.approach.x, y: placement.approach.y + radii[i] - 1 }, [
+        id,
+      ]),
+    ).toBe(id)
+    expect(
+      nearestPortal({ x: placement.approach.x, y: placement.approach.y + radii[i] + 1 }, [
+        id,
+      ]),
+    ).toBe(null)
+  })
+})

@@ -7,7 +7,16 @@ import {
 } from '../domain/input/keyboard'
 import { moveWithCollisions } from '../game/geometry'
 
-export function useKeyboardMovement(enabled: boolean) {
+export function isInteractiveTarget(target: EventTarget | null): boolean {
+  return (
+    target instanceof Element &&
+    !!target.closest(
+      'button, select, input, textarea, a, summary, [role="button"], [contenteditable="true"]',
+    )
+  )
+}
+
+export function useKeyboardMovement(enabled: boolean, timeScale = 1) {
   const [state, setState] = useState({
     position: START_POSITION,
     direction: 'down' as MovementDirection,
@@ -23,9 +32,8 @@ export function useKeyboardMovement(enabled: boolean) {
       if (!isMovementCode(event.code) || event.ctrlKey || event.metaKey || event.altKey)
         return
       if (
-        event.target instanceof HTMLElement &&
-        (event.target.matches('input, textarea, select') ||
-          event.target.isContentEditable)
+        isInteractiveTarget(event.target) ||
+        isInteractiveTarget(document.activeElement)
       )
         return
       event.preventDefault()
@@ -38,14 +46,17 @@ export function useKeyboardMovement(enabled: boolean) {
       pressed.clear()
       setState((s) => (s.moving ? { ...s, moving: false } : s))
     }
+    const clearForControl = (event: Event) => {
+      if (isInteractiveTarget(event.target)) clear()
+    }
     const tick = (time: number) => {
       const seconds = Math.min((time - last) / 1000, 0.04)
       last = time
       const vector = getMovementVector(pressed)
       const previous = positionRef.current
       const position = moveWithCollisions(previous, {
-        x: vector.dx * 170 * seconds,
-        y: vector.dy * 170 * seconds,
+        x: vector.dx * 170 * timeScale * seconds,
+        y: vector.dy * 170 * timeScale * seconds,
       })
       const movedX = position.x - previous.x,
         movedY = position.y - previous.y
@@ -67,6 +78,9 @@ export function useKeyboardMovement(enabled: boolean) {
       )
       frame = requestAnimationFrame(tick)
     }
+    document.addEventListener('pointerdown', clearForControl, true)
+    document.addEventListener('mousedown', clearForControl, true)
+    document.addEventListener('focusin', clearForControl)
     window.addEventListener('keydown', keydown)
     window.addEventListener('keyup', keyup)
     window.addEventListener('blur', clear)
@@ -74,11 +88,14 @@ export function useKeyboardMovement(enabled: boolean) {
     frame = requestAnimationFrame(tick)
     return () => {
       cancelAnimationFrame(frame)
+      document.removeEventListener('pointerdown', clearForControl, true)
+      document.removeEventListener('mousedown', clearForControl, true)
+      document.removeEventListener('focusin', clearForControl)
       window.removeEventListener('keydown', keydown)
       window.removeEventListener('keyup', keyup)
       window.removeEventListener('blur', clear)
       document.removeEventListener('visibilitychange', clear)
     }
-  }, [enabled])
+  }, [enabled, timeScale])
   return { ...state, moving: enabled && state.moving }
 }

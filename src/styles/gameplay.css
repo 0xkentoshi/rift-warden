@@ -193,3 +193,48 @@
 .portal-hotspot {
   cursor: pointer;
 }
+
+@media (min-width: 1151px) {
+  .hud {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  }
+  .hud__brand {
+    justify-self: start;
+  }
+  .hud__stats {
+    justify-self: center;
+  }
+  .hud__nav {
+    justify-self: end;
+    min-width: 0;
+    justify-content: flex-end;
+  }
+}
+.registry-table {
+  table-layout: fixed;
+  width: 100%;
+}
+.registry-table th,
+.registry-table td {
+  padding-left: 5px;
+  padding-right: 5px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.registry-table th:first-child {
+  width: 25%;
+}
+.registry-table th:last-child {
+  width: 23%;
+}
+.registry-table td:first-child {
+  padding-left: 34px;
+}
+.registry-seal {
+  left: 5px;
+  width: 23px;
+}
+.registry-table .risk-text {
+  padding: 4px;
+}

@@ -12,7 +12,8 @@ export function useModalFocus(activeKey: string | null) {
           'button:not(:disabled), input, select, textarea, summary, a[href], [tabindex="0"]',
         ),
       ).filter((element) => !element.hidden)
-    focusable()[0]?.focus()
+    if (dialog.hasAttribute('data-movement-surface')) dialog.focus()
+    else focusable()[0]?.focus()
     const trap = (event: KeyboardEvent) => {
       if (event.key !== 'Tab') return
       const elements = focusable()

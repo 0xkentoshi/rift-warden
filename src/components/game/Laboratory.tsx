@@ -14,6 +14,7 @@ import type { AuditEvent } from '../../types/audit'
 import { readPreference, writePreference } from '../../storage/labStorage'
 
 interface Props {
+  timeScale?: number
   portals: Portal[]
   movementLocked?: boolean
   onNearbyChange?: (id: string | null) => void
@@ -25,6 +26,7 @@ interface Props {
 }
 export function Laboratory({
   portals,
+  timeScale = 1,
   interactionLocked,
   movementLocked = interactionLocked,
   onNearbyChange,
@@ -48,7 +50,7 @@ export function Laboratory({
   const [transform, setTransform] = useState(() =>
     viewportTransform(window.innerWidth, window.innerHeight),
   )
-  const movement = useKeyboardMovement(!movementLocked)
+  const movement = useKeyboardMovement(!movementLocked, timeScale)
   const nearby = nearestPortal(
     movement.position,
     portals.map((p) => p.id),
@@ -93,6 +95,16 @@ export function Laboratory({
   return (
     <main
       className="laboratory"
+      tabIndex={-1}
+      onPointerDown={(event) => {
+        if (
+          event.target === event.currentTarget ||
+          !(event.target as Element).closest(
+            'button, select, input, textarea, a, summary, [role="button"], [contenteditable="true"]',
+          )
+        )
+          event.currentTarget.focus()
+      }}
       ref={viewport}
       inert={interactionLocked}
       aria-label={language === 'ru' ? 'Лаборатория порталов' : 'Portal laboratory'}

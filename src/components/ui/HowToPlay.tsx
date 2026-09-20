@@ -119,8 +119,8 @@ export function HowToPlay({
           0.5× / 1× / 1.5× / 2× / 5× —{' '}
           {bi(
             l,
-            'скорость симуляции, не персонажа. Settings, How to Play и другие системные экраны ставят игру на паузу. Осмотр портала и выбор действий — нет.',
-            'simulation speed, not movement speed. Settings, How to Play and other system screens pause the game. Portal inspection and action previews do not.',
+            'скорость симуляции, обратного отсчёта, дрейфа Stability, игровых таймеров и движения персонажа. Не влияет на отзывчивость UI. Settings, How to Play и другие системные экраны ставят игру на паузу. Осмотр портала и выбор действий — нет.',
+            'speed of simulation, countdown, Stability drift, gameplay timers and character movement. UI responsiveness is unaffected. Settings, How to Play and other system screens pause the game. Portal inspection and action previews do not.',
           )}
         </p>
         <h3>{bi(l, 'Прогрессия', 'Progression')}</h3>

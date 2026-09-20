@@ -230,6 +230,7 @@ function App() {
       )}
       <Laboratory
         key={sceneEpoch}
+        timeScale={timeScale}
         portals={portals}
         lastAction={lastAction}
         interactionLocked={blocking}

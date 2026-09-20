@@ -21,6 +21,7 @@ import {
   closureKind,
   type ActionResult,
 } from '../../domain/actions/applyAction'
+import { isInteractiveTarget } from '../../hooks/useKeyboardMovement'
 import { AnimatedRisk } from './AnimatedRisk'
 
 interface PortalControlPanelProps {
@@ -190,6 +191,11 @@ export function PortalControlPanel({
     <div className="panel-backdrop portal-backdrop" role="presentation">
       <section
         className="portal-panel"
+        tabIndex={-1}
+        data-movement-surface
+        onPointerDown={(event) => {
+          if (!isInteractiveTarget(event.target)) event.currentTarget.focus()
+        }}
         role="dialog"
         aria-modal="true"
         aria-label={`${portal.name} control panel`}
