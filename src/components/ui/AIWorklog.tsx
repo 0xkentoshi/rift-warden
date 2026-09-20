@@ -175,20 +175,20 @@ export function AIWorklog({
         </article>
         <article>
           <small>{ru ? 'Время разработки' : 'Development time'}</small>
-          <strong>{ru ? 'Примерно 8+ часов' : 'Approximately 8+ hours'}</strong>
+          <strong>{ru ? '15+ часов' : '15+ hours'}</strong>
           <p>
             {ru
-              ? 'Оценка автора: на текущий момент суммарно затрачено примерно 8+ часов активной разработки. Проект продолжает дорабатываться; точный поминутный таймер не вёлся.'
-              : 'Author-provided estimate: approximately 8+ hours of active development so far. Work is ongoing; no precise minute-by-minute timer was kept.'}
+              ? 'Итоговая оценка автора: проект завершён примерно за 15+ часов активной разработки. Точный поминутный таймер не вёлся.'
+              : 'Final author estimate: the project was completed in approximately 15+ hours of active development. No precise minute-by-minute timer was kept.'}
           </p>
         </article>
         <article>
-          <small>{ru ? 'Токены' : 'Tokens'}</small>
-          <strong>{ru ? 'Не подсчитывались' : 'Not counted'}</strong>
+          <small>{ru ? 'Использование Codex' : 'Codex usage'}</small>
+          <strong>{ru ? '9 × 5-часовых лимитных окон' : '9 × 5-hour usage windows'}</strong>
           <p>
             {ru
-              ? 'Суммарная статистика по всем сессиям недоступна. Оценка не выдумывается.'
-              : 'Combined usage across sessions is unavailable. No estimate is invented.'}
+              ? 'За разработку было использовано 9 пятичасовых лимитных окон Codex. Из них 3 окна были получены через ручной сброс лимита, ещё 6 раз пришлось дождаться следующего доступного окна. Это показатель usage quota, а не количество токенов. Суммарное количество токенов не подсчитывалось.'
+              : 'Development used 9 five-hour Codex usage windows. 3 windows were obtained through manual quota resets, while 6 required waiting for the next available window. This describes usage quota, not token count. Total token usage was not tracked.'}
           </p>
         </article>
       </div>
